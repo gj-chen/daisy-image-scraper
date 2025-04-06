@@ -66,10 +66,12 @@ def process_url_chunk(urls):
     return results
 
 def main():
-    # Set to clear storage for this run
-    os.environ['CLEAR_STORAGE'] = 'true'
-    if os.environ.get('CLEAR_STORAGE', '').lower() == 'true':
+    # Clear storage and DB based on config
+    if config.CLEAR_ON_RUN:
+        from utils.storage_utils import clear_storage
+        from utils.db_utils import clear_database
         clear_storage()
+        clear_database()
     
     # Track scraping date
     current_date = datetime.now().strftime("%Y-%m-%d")

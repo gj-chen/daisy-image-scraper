@@ -24,6 +24,7 @@ UPLOAD_ENDPOINT = get_optional_env("UPLOAD_ENDPOINT", "https://default-upload-en
 SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
 
 # Constants
+CLEAR_ON_RUN = True  # Clear storage and DB on new runs
 MAX_RETRIES = 3
 SCRAPER_CONCURRENCY_LIMIT = 100  # Increased concurrency for faster processing
 SCRAPER_MAX_AGE_YEARS = 6  # Keep 6 years as requested
