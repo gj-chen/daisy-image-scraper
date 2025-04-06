@@ -32,4 +32,12 @@ BATCH_SIZE = 200  # Increased batch size
 URL_BATCH_SIZE = 300  # Increased URL batch size
 IMAGE_BATCH_SIZE = 5  # Smaller image batches for faster processing
 # Get seed URLs from environment variable, fallback to default if not set
-SCRAPER_SEED_URLS = get_optional_env("SCRAPER_SEED_URLS", "https://sheerluxe.com").split(",")
+# Multiple entry points for parallel processing
+DEFAULT_SEEDS = [
+    "https://sheerluxe.com/fashion/shopping",
+    "https://sheerluxe.com/fashion/designer",
+    "https://sheerluxe.com/fashion/high-street",
+    "https://sheerluxe.com/fashion/trends",
+    "https://sheerluxe.com/fashion/dresses"
+]
+SCRAPER_SEED_URLS = get_optional_env("SCRAPER_SEED_URLS", ",".join(DEFAULT_SEEDS)).split(",")
