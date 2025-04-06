@@ -91,13 +91,17 @@ class AsyncScraper:
                                     logger.info(f"Skipping image {image_url} - empty metadata")
                                     continue
 
-                                # Check if metadata contains any meaningful data
-                                has_content = any(
-                                    value for value in metadata.values() 
-                                    if value and (isinstance(value, str) and value.strip() or 
-                                                isinstance(value, (list, dict)) and value)
-                                )
-                                if not has_content:
+                                # Recursive function to check if nested dict has any non-empty values
+                                def has_content(d):
+                                    if isinstance(d, dict):
+                                        return any(has_content(v) for v in d.values())
+                                    elif isinstance(d, list):
+                                        return len(d) > 0
+                                    elif isinstance(d, str):
+                                        return bool(d.strip())
+                                    return False
+
+                                if not has_content(metadata):
                                     logger.info(f"Skipping image {image_url} - empty metadata content")
                                     continue
 
