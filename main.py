@@ -4,7 +4,11 @@ from utils.supabase_client import supabase
 import logging
 import os
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s:%(name)s:%(message)s'
+)
+
 
 app = Flask(__name__)
 

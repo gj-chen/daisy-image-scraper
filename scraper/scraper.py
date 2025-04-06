@@ -1,70 +1,49 @@
 import requests
 from bs4 import BeautifulSoup
-from utils.openai_utils import get_embedding, generate_gpt_structured_metadata
-from config import SHEERLUXE_COOKIE
+from utils.openai_utils import generate_gpt_structured_metadata
+from utils.db_utils import insert_metadata_to_supabase, generate_embedding
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SheerLuxeScraper:
-    def __init__(self):
-        self.cookie = SHEERLUXE_COOKIE
-
     def scrape_page(self, url):
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Cookie": f"auth_cookie={self.cookie}"
-        }
+        response = requests.get(url, timeout=20)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        images = soup.find_all("img")
 
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            raise Exception(f"Failed to fetch page: {response.status_code}")
+        inserted_images = []
 
-        soup = BeautifulSoup(response.text, 'html.parser')
+        for img in images:
+            image_url = img.get("src")
+            if not image_url:
+                logger.warning("Image without src encountered, skipping.")
+                continue
 
-        # Scraping improvements
-        page_title = soup.find('title').get_text(strip=True)
+            context = {
+                "image_url": image_url,
+                "alt_text": img.get("alt", ""),
+                "title": soup.title.string if soup.title else "",
+                "surrounding_text": img.parent.get_text(strip=True) if img.parent else ""
+            }
 
-        meta_desc = soup.find('meta', {'name': 'description'})
-        if meta_desc:
-            description = meta_desc.get('content', '').strip()
-        else:
-            first_para = soup.find('p')
-            description = first_para.get_text(strip=True) if first_para else ''
+            structured_metadata = generate_gpt_structured_metadata(context)
+            if structured_metadata is None:
+                logger.error(f"Skipping image due to GPT failure: {image_url}")
+                continue
 
-        paragraphs = soup.find_all('p')
-        content_summary = ' '.join(p.get_text(strip=True) for p in paragraphs[:3])
+            embedding = generate_embedding(structured_metadata)
 
-        articles = soup.find_all('article')
-        scraped_data = []
+            data_record = {
+                "image_url": image_url,
+                "metadata": structured_metadata,
+                "embedding": embedding
+            }
 
-        for article in articles:
-            images = article.find_all('img')
-            context_text = article.get_text(separator=' ', strip=True)
+            insert_metadata_to_supabase([data_record])
+            logger.info(f"Inserted metadata incrementally for image: {image_url}")
+            inserted_images.append(image_url)
 
-            for img in images:
-                img_src = img.get('src')
-                if not img_src:
-                    continue
-
-                # GPT-4 structured metadata generation
-                structured_metadata = generate_gpt_structured_metadata({
-                    "title": page_title,
-                    "description": description,
-                    "content_summary": content_summary,
-                    "image_context": context_text
-                })
-
-                # Embedding generation from structured metadata summary
-                embedding_vector = get_embedding(structured_metadata['style_context']['vibe_emotion'])
-
-                # Complete data item
-                scraped_item = {
-                    "image_url": img_src,
-                    "source_url": url,
-                    "title": page_title,
-                    "description": description,
-                    "metadata": structured_metadata,
-                    "embedding": embedding_vector
-                }
-
-                scraped_data.append(scraped_item)
-
-        return scraped_data
+        logger.info(f"Scraping complete for URL: {url}. Total images inserted: {len(inserted_images)}")
+        return inserted_images
