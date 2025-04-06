@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timedelta
 import re
 from .url_frontier import URLFrontier
-from config import SCRAPER_CONCURRENCY_LIMIT, SCRAPER_SEED_URLS, FASHION_SUBCATEGORIES, URL_BATCH_SIZE
+from config import SCRAPER_CONCURRENCY_LIMIT, SCRAPER_SEED_URLS, FASHION_SUBCATEGORIES, URL_BATCH_SIZE, SCRAPER_MAX_AGE_YEARS
 from utils.openai_utils import generate_gpt_structured_metadata_sync
 from utils.db_utils import generate_embedding_sync, insert_metadata_to_supabase_sync, prepare_metadata_record
 
@@ -50,36 +50,30 @@ class AsyncScraper:
                     html = await response.text()
                     soup = BeautifulSoup(html, "html.parser")
 
-                    # Extract links for crawling
-                    # Handle pagination first
-                    if "/fashion/" in url and "?page=" not in url:
-                        # Find pagination links
-                        pagination = soup.find("ul", class_="pager__items")
-                        if pagination:
-                            last_page = 1
-                            for page_link in pagination.find_all("a"):
-                                if page_link.get("href") and "page=" in page_link["href"]:
-                                    try:
-                                        page_num = int(page_link["href"].split("page=")[1])
-                                        last_page = max(last_page, page_num)
-                                    except ValueError:
-                                        continue
-                            
-                            # Add all pagination URLs
-                            for page in range(2, last_page + 1):
-                                pagination_url = f"{url}?page={page}"
-                                if pagination_url not in self.frontier.visited:
-                                    logger.info(f"Found pagination URL: {pagination_url}")
-                                    self.frontier.add_url(pagination_url, depth)
+                    # Handle year archives
+                    current_year = datetime.now().year
+                    for year in range(current_year - SCRAPER_MAX_AGE_YEARS, current_year + 1):
+                        archive_url = f"https://sheerluxe.com/fashion/archive/{year}"
+                        if archive_url not in self.frontier.visited:
+                            self.frontier.add_url(archive_url, depth + 1)
+                            logger.info(f"Added archive URL: {archive_url}")
 
-                    # Handle regular links
+                    # Extract links for crawling
                     links = soup.find_all("a", href=True)
                     for link in links:
                         new_url = urljoin(url, link["href"])
                         if ("sheerluxe.com/fashion" in new_url and 
                             not new_url.endswith(('.jpg', '.jpeg', '.png', '.gif'))):
-                            # Only attempt to add if not already visited
-                            if new_url not in self.frontier.visited:
+                            # Check pagination
+                            if "?page=" in new_url:
+                                page_num = int(new_url.split("page=")[1])
+                                # Allow up to page 100 to ensure we get everything
+                                if page_num <= 100:
+                                    if new_url not in self.frontier.visited:
+                                        self.frontier.add_url(new_url, depth + 1)
+                                        logger.info(f"Added pagination URL: {new_url}")
+                            # Handle regular URLs
+                            elif new_url not in self.frontier.visited:
                                 self.frontier.add_url(new_url, depth + 1)
                                 logger.info(f"Added new URL to queue: {new_url}")
 
@@ -233,10 +227,10 @@ def scrape_page(url: str) -> List[str]:
     # Add the main URL and ensure it's properly formatted
     main_url = url if url.startswith(('http://', 'https://')) else f'https://{url}'
     scraper.frontier.add_url(main_url, depth=0)
-    
+
     # Add fashion subcategory URLs
     for subcat in FASHION_SUBCATEGORIES:
         subcat_url = f"https://sheerluxe.com/fashion/{subcat}"
         scraper.frontier.add_url(subcat_url, depth=0)
-    
+
     return asyncio.run(scraper.crawl(main_url))
