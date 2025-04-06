@@ -4,10 +4,5 @@ requests
 openai
 supabase
 python-dotenv
-openai
-playwright
-python-dotenv
-requests
-supabase
 gunicorn
 flask
