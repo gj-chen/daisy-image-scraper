@@ -1,10 +1,23 @@
 import json
 import logging
+import re
 from openai import OpenAI
 from config import OPENAI_API_KEY
 
 logging.basicConfig(level=logging.INFO)
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+def clean_gpt_response(raw_text):
+    # Remove Markdown code block
+    cleaned = re.sub(r'```(?:json)?', '', raw_text).strip()
+
+    # Remove semicolons and ensure proper commas
+    cleaned = cleaned.replace(';', ',')
+
+    # Remove potential trailing commas (before } or ])
+    cleaned = re.sub(r',\s*([}\]])', r'\1', cleaned)
+
+    return cleaned
 
 def generate_gpt_structured_metadata(scraped_content):
     prompt = f"""
@@ -52,7 +65,7 @@ def generate_gpt_structured_metadata(scraped_content):
       }}
     }}
 
-    Fill out all fields accurately and briefly, based on provided content. Respond ONLY with the JSON object.
+    Fill out all fields accurately and briefly, based on provided content. Respond ONLY with valid JSON object (no markdown, no extra text).
     """
 
     response = client.chat.completions.create(
@@ -63,15 +76,19 @@ def generate_gpt_structured_metadata(scraped_content):
 
     raw_content = response.choices[0].message.content.strip()
 
-    # Explicit logging to debug response
-    logging.info(f"GPT Response: {raw_content}")
+    logging.info(f"Raw GPT response before cleaning: {raw_content}")
+
+    # Explicitly clean GPT response
+    cleaned_response = clean_gpt_response(raw_content)
+
+    logging.info(f"Cleaned GPT response: {cleaned_response}")
 
     try:
-        structured_metadata = json.loads(raw_content)
+        structured_metadata = json.loads(cleaned_response)
     except json.JSONDecodeError as e:
         logging.error(f"JSON decoding error: {e}")
-        logging.error(f"Raw GPT response: {raw_content}")
-        raise Exception(f"Failed to parse JSON from GPT response: {e}")
+        logging.error(f"Cleaned GPT response: {cleaned_response}")
+        raise Exception(f"Failed to parse cleaned JSON: {e}")
 
     return structured_metadata
 
