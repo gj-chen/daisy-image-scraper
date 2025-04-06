@@ -19,6 +19,9 @@ class AsyncScraper:
         self.frontier = URLFrontier()
         self.sem = asyncio.Semaphore(concurrency_limit)
         self.session = None
+        # Cache existing items
+        from utils.db_utils import get_existing_urls_and_images
+        self.existing_urls, self.existing_images = get_existing_urls_and_images()
 
     async def init_session(self):
         if not self.session:
@@ -62,6 +65,8 @@ class AsyncScraper:
                             continue
 
                         image_url = urljoin(url, raw_src)
+                        if image_url in self.existing_images:
+                            continue
                         
                             
                         context = {
@@ -93,9 +98,21 @@ class AsyncScraper:
                                 stored_image_url=stored_image_url
                             )
 
-                            insert_metadata_to_supabase_sync([record])
-                            inserted_images.append(image_url)
-                            logger.info(f"Processed image: {image_url}")
+                            return record, image_url
+
+                    batch_records = []
+                    batch_urls = []
+                    for img in images:
+                        result = await process_single_image(img)
+                        if result:
+                            record, url = result
+                            batch_records.append(record)
+                            batch_urls.append(url)
+                            
+                    if batch_records:
+                        insert_metadata_to_supabase_sync(batch_records)
+                        inserted_images.extend(batch_urls)
+                        logger.info(f"Processed batch of {len(batch_records)} images")
 
                         except Exception as e:
                             logger.error(f"Failed processing image {image_url}: {str(e)}")
