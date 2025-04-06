@@ -100,8 +100,6 @@ class AsyncScraper:
                     for i in range(0, len(valid_images), batch_size):
                         batch = valid_images[i:i + batch_size]
                         results = await process_image_batch(batch)
-                            if image_url in self.existing_images:
-                                continue
 
                             try:
                                 context = {
