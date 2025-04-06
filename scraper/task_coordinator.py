@@ -10,8 +10,8 @@ from utils.supabase_client import supabase_client
 import time
 
 class TaskCoordinator:
-    def __init__(self, chunk_size: int = 20):
-        self.pending_urls: deque = deque()
+    def __init__(self, chunk_size: int = 50):  # Increased chunk size
+        self.pending_urls: deque = deque(maxlen=100000)  # Set max length to prevent memory issues
         self.processing_urls: Set[str] = set()
         self.completed_urls: Set[str] = set()
         self.chunk_size = chunk_size

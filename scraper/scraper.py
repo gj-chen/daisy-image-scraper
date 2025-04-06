@@ -122,7 +122,7 @@ class AsyncScraper:
                     images = soup.find_all("img")
                     inserted_images = []
                     batch_records = []
-                    batch_size = 5  # Process 5 images at a time
+                    batch_size = 20  # Process more images concurrently
 
                     valid_images = [
                         (img, urljoin(url, img.get("src")))
