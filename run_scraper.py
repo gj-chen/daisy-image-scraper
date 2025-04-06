@@ -81,7 +81,14 @@ def main():
         json.dump(scrape_data, f)
 
     from scraper.task_coordinator import TaskCoordinator
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--worker-id', type=int, default=0)
+    parser.add_argument('--total-workers', type=int, default=1)
+    args = parser.parse_args()
+    
     coordinator = TaskCoordinator(chunk_size=20)
+    coordinator.worker_id = args.worker_id
     
     # Initialize with seed URLs
     coordinator.add_urls(SCRAPER_SEED_URLS)

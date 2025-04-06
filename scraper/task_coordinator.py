@@ -6,12 +6,27 @@ from collections import deque
 
 logger = logging.getLogger(__name__)
 
+from utils.supabase_client import supabase_client
+import time
+
 class TaskCoordinator:
     def __init__(self, chunk_size: int = 20):
         self.pending_urls: deque = deque()
         self.processing_urls: Set[str] = set()
         self.completed_urls: Set[str] = set()
         self.chunk_size = chunk_size
+        self.worker_id = None
+        
+    def acquire_lock(self, url: str) -> bool:
+        try:
+            result = supabase_client.table('url_locks').insert({
+                'url': url,
+                'worker_id': self.worker_id,
+                'locked_at': int(time.time())
+            }).execute()
+            return len(result.data) > 0
+        except:
+            return False
         
     def add_urls(self, urls: List[str]) -> None:
         for url in urls:
