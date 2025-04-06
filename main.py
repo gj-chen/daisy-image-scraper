@@ -19,9 +19,25 @@ def home():
 def health():
     return jsonify({"status": "healthy"}), 200
 
+from typing import Dict, Any
+from werkzeug.exceptions import BadRequest
+from scraper.exceptions import ScrapingError
+
 @app.route('/scrape', methods=['POST'])
-def scrape():
+def scrape() -> Dict[str, Any]:
+    """
+    Endpoint to scrape images from a URL
+    
+    Returns:
+        JSON response with scraped images or error
+        
+    Raises:
+        BadRequest: If URL is missing or invalid
+    """
     try:
+        if not request.is_json:
+            raise BadRequest("Request must be JSON")
+            
         url = request.json.get('url')
         if not url:
             logging.error("Missing URL")

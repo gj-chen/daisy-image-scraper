@@ -14,7 +14,24 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 logger = logging.getLogger(__name__)
 
-def scrape_page(url, max_retries=3):
+from typing import List, Optional
+from config import MAX_RETRIES
+from .exceptions import ScrapingError
+
+def scrape_page(url: str, max_retries: int = MAX_RETRIES) -> List[str]:
+    """
+    Scrapes images from a given URL with retry logic
+    
+    Args:
+        url: The URL to scrape
+        max_retries: Number of retry attempts
+        
+    Returns:
+        List of scraped image URLs
+        
+    Raises:
+        ScrapingError: If scraping fails after all retries
+    """
     logger.info(f"Scraping URL: {url}")
     
     for attempt in range(max_retries):
