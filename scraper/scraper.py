@@ -172,4 +172,5 @@ class AsyncScraper:
 
 def scrape_page(url: str) -> List[str]:
     scraper = AsyncScraper()
+    scraper.frontier.add_url("https://sheerluxe.com", depth=0)  # Add seed URL
     return asyncio.run(scraper.crawl(url))
