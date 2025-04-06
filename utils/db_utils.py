@@ -12,7 +12,13 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def insert_metadata_to_supabase_sync(metadata_list, batch_size=BATCH_SIZE):
     try:
-        batches = [metadata_list[i:i + batch_size] for i in range(0, len(metadata_list), batch_size)]
+        # Pre-process records to minimize payload
+        processed_records = [{k: v for k, v in record.items() if v is not None} 
+                           for record in metadata_list]
+        
+        batches = [processed_records[i:i + batch_size] 
+                  for i in range(0, len(processed_records), batch_size)]
+                  
         for batch in batches:
             supabase_client.table('moodboard_items').insert(batch).execute()
             logger.info(f"Inserted batch of {len(batch)} records.")

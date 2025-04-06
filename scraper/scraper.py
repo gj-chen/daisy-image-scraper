@@ -34,6 +34,9 @@ class AsyncScraper:
             await self.session.close()
 
     async def process_url(self, url: str, depth: int) -> List[str]:
+        if url in self.frontier.url_cache:
+            return self.frontier.url_cache[url]
+            
         async with self.sem:
             try:
                 async with self.session.get(url, timeout=30) as response:
@@ -102,12 +105,18 @@ class AsyncScraper:
 
                     batch_records = []
                     batch_urls = []
-                    for img in images:
-                        result = await process_single_image(img)
-                        if result:
-                            record, url = result
-                            batch_records.append(record)
-                            batch_urls.append(url)
+                    # Process images in parallel batches
+                    batch_size = 10
+                    for i in range(0, len(images), batch_size):
+                        batch = images[i:i + batch_size]
+                        tasks = [process_single_image(img) for img in batch]
+                        results = await asyncio.gather(*tasks, return_exceptions=True)
+                        
+                        for result in results:
+                            if result and not isinstance(result, Exception):
+                                record, url = result
+                                batch_records.append(record)
+                                batch_urls.append(url)
                             
                     if batch_records:
                         insert_metadata_to_supabase_sync(batch_records)
