@@ -40,11 +40,13 @@ def scrape() -> Dict[str, Any]:
         if not url.startswith(('http://', 'https://')):
             return jsonify({"error": "Invalid URL format"}), 400
 
-        images = scrape_page(url)
-        if not images:
-            return jsonify({"error": "No images found"}), 404
-
-        return jsonify({"images": images, "inserted": len(images)}), 200
+        images = scrape_page(url)  # This now handles concurrent processing
+        return jsonify({
+            "status": "success",
+            "images": images,
+            "inserted": len(images),
+            "message": "Crawling and processing completed"
+        }), 200
     except requests.RequestException as e:
         logging.error(f"Request failed: {str(e)}")
         return jsonify({"error": str(e), "type": "request_error"}), 502
