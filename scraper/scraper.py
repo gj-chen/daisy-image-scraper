@@ -47,7 +47,9 @@ class AsyncScraper:
                     links = soup.find_all("a", href=True)
                     for link in links:
                         new_url = urljoin(url, link["href"])
-                        if "sheerluxe.com" in new_url and self.frontier.is_valid_date(new_url):
+                        if ("sheerluxe.com" in new_url and 
+                            self.frontier.is_valid_date(new_url) and 
+                            not check_url_exists(new_url)):
                             self.frontier.add_url(new_url, depth + 1)
 
                     # Process images
@@ -60,6 +62,10 @@ class AsyncScraper:
                             continue
 
                         image_url = urljoin(url, raw_src)
+                        if check_image_exists(image_url):
+                            logger.info(f"Skipping already processed image: {image_url}")
+                            continue
+                            
                         context = {
                             "image_url": image_url,
                             "alt_text": img.get("alt", ""),

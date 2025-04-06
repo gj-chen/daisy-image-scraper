@@ -5,6 +5,7 @@ import logging
 from typing import Set, Optional
 import re
 from config import SCRAPER_MAX_DEPTH, SCRAPER_MAX_AGE_YEARS
+from utils.db_utils import check_url_exists, check_image_exists
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ class URLFrontier:
         self.visited = set()
         self.max_depth = max_depth
         self.max_age_years = max_age_years
+        self.processed_images = set()
         
     def add_url(self, url: str, depth: int = 0):
         if url not in self.visited and depth <= self.max_depth:
