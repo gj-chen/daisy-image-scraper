@@ -36,3 +36,7 @@ class URLFrontier:
     @property
     def has_urls(self) -> bool:
         return len(self.queue) > 0
+        
+    @property
+    def url_count(self) -> int:
+        return len(self.queue)
