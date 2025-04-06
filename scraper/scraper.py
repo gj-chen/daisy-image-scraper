@@ -4,9 +4,13 @@ from urllib.parse import urljoin
 from time import sleep
 import logging
 from typing import List, Optional
+import os
+import openai
 from utils.openai_utils import generate_gpt_structured_metadata_sync
 from utils.db_utils import generate_embedding_sync, insert_metadata_to_supabase_sync, prepare_metadata_record
-import logging
+
+# Initialize OpenAI client
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 logger = logging.getLogger(__name__)
 
