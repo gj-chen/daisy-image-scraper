@@ -6,13 +6,14 @@ from typing import Optional
 load_dotenv()
 
 def get_required_env(key: str) -> str:
-    value = os.getenv(key)
+    value: Optional[str] = os.getenv(key)
     if not value:
         raise ValueError(f"Missing required environment variable: {key}")
     return value
 
 def get_optional_env(key: str, default: Optional[str] = None) -> Optional[str]:
-    return os.getenv(key, default)
+    value: Optional[str] = os.getenv(key, default)
+    return value
 
 # Required configs - critical for core functionality
 SUPABASE_URL = get_required_env("SUPABASE_URL")
