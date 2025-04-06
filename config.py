@@ -31,7 +31,5 @@ SCRAPER_MAX_AGE_YEARS = 3
 SCRAPER_MAX_DEPTH = 3
 BATCH_SIZE = 50  # For batch DB operations
 URL_BATCH_SIZE = 100  # For URL frontier processing
-SCRAPER_SEED_URLS = [
-    "https://sheerluxe.com",
-    # Add more seed URLs here as needed
-]  # List of seed URLs for crawling
+# Get seed URLs from environment variable, fallback to default if not set
+SCRAPER_SEED_URLS = get_optional_env("SCRAPER_SEED_URLS", "https://sheerluxe.com").split(",")
