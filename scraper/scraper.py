@@ -76,13 +76,17 @@ class AsyncScraper:
                             if not embedding:
                                 continue
 
+                            from utils.storage_utils import store_image
+                            stored_image_url = store_image(image_url)
+                            
                             record = prepare_metadata_record(
                                 image_url=image_url,
                                 source_url=url,
                                 title=context['title'],
                                 description=context['alt_text'],
                                 structured_metadata=metadata,
-                                embedding=embedding
+                                embedding=embedding,
+                                stored_image_url=stored_image_url
                             )
 
                             insert_metadata_to_supabase_sync([record])

@@ -32,9 +32,10 @@ def generate_embedding_sync(metadata):
         return []
 
 
-def prepare_metadata_record(image_url, source_url, title, description, structured_metadata, embedding):
+def prepare_metadata_record(image_url, source_url, title, description, structured_metadata, embedding, stored_image_url=None):
     return {
         "image_url": image_url,
+        "stored_image_url": stored_image_url,
         "source_url": source_url,
         "title": title,
         "description": description,
