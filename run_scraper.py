@@ -59,8 +59,9 @@ def process_url_chunk(urls):
     return results
 
 def main():
-    # Clear storage before starting
-    clear_storage()
+    # Only clear storage if explicitly requested
+    if os.environ.get('CLEAR_STORAGE', '').lower() == 'true':
+        clear_storage()
     num_workers = max(1, cpu_count() - 1)
     print(f"Starting distributed scraping with {num_workers} workers")
     
