@@ -14,7 +14,6 @@ class URLFrontier:
         self.visited = set()
         self.max_depth = max_depth
         self.max_age_years = max_age_years
-        self.url_cache = {}  # Cache URL metadata
         
     def add_url(self, url: str, depth: int = 0):
         if depth <= self.max_depth:
