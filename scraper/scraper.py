@@ -119,8 +119,7 @@ class AsyncScraper:
                                     embedding=embedding,
                                     stored_image_url=stored_image_url
                                 )
-                                if record:  # Only add if not a duplicate
-                                    batch_records.append(record)
+                                batch_records.append(record)
                                 inserted_images.append(image_url)
 
                                 if len(batch_records) >= batch_size:

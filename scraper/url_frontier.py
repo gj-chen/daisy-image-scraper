@@ -13,21 +13,12 @@ class URLFrontier:
         self.visited = set()
         self.max_depth = max_depth
         self.max_age_years = max_age_years
-        self.urls = {} #Added to store urls with depth
 
-    def normalize_url(self, url: str) -> str:
-        # Remove trailing slash and normalize protocol
-        normalized = url.rstrip('/')
-        if normalized.startswith('http://'):
-            normalized = 'https://' + normalized[7:]
-        return normalized
-
-    def add_url(self, url: str, depth: int = 0) -> None:
-        normalized_url = self.normalize_url(url)
-        if depth <= self.max_depth and normalized_url not in self.visited:
-            self.queue.append((normalized_url, depth))
-            self.visited.add(normalized_url)
-
+    def add_url(self, url: str, depth: int = 0):
+        if not url.startswith(('http://', 'https://')):
+            url = f'https://{url}'
+        if depth <= self.max_depth and url not in self.visited:
+            self.queue.append((url, depth))
 
     def get_next_url(self) -> Optional[tuple[str, int]]:
         return self.queue.popleft() if self.queue else None
@@ -47,7 +38,7 @@ class URLFrontier:
     @property
     def has_urls(self) -> bool:
         return len(self.queue) > 0
-
+        
     @property
     def url_count(self) -> int:
         return len(self.queue)
