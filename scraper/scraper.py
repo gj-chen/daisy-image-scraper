@@ -51,6 +51,28 @@ class AsyncScraper:
                     soup = BeautifulSoup(html, "html.parser")
 
                     # Extract links for crawling
+                    # Handle pagination first
+                    if "/fashion/" in url and "?page=" not in url:
+                        # Find pagination links
+                        pagination = soup.find("ul", class_="pager__items")
+                        if pagination:
+                            last_page = 1
+                            for page_link in pagination.find_all("a"):
+                                if page_link.get("href") and "page=" in page_link["href"]:
+                                    try:
+                                        page_num = int(page_link["href"].split("page=")[1])
+                                        last_page = max(last_page, page_num)
+                                    except ValueError:
+                                        continue
+                            
+                            # Add all pagination URLs
+                            for page in range(2, last_page + 1):
+                                pagination_url = f"{url}?page={page}"
+                                if pagination_url not in self.frontier.visited:
+                                    logger.info(f"Found pagination URL: {pagination_url}")
+                                    self.frontier.add_url(pagination_url, depth)
+
+                    # Handle regular links
                     links = soup.find_all("a", href=True)
                     for link in links:
                         new_url = urljoin(url, link["href"])
