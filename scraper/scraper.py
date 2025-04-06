@@ -152,14 +152,18 @@ class AsyncScraper:
                     await asyncio.sleep(10)  # Reduced wait time
                     continue
 
-                # Get batch of URLs to process
+                # Get larger batch of URLs to process
                 current_batch = []
-                while len(current_batch) < 5 and self.frontier.has_urls:
+                while len(current_batch) < 20 and self.frontier.has_urls:  # Increased batch size
                     url, depth = self.frontier.get_next_url()
                     if url not in self.frontier.visited and url not in [u for u, _ in current_batch]:
+                        logger.info(f"Processing URL in batch: {url}")
                         current_batch.append((url, depth))
 
                 if not current_batch:
+                    if not self.frontier.has_urls:
+                        logger.info("Completed processing all URLs in frontier")
+                        break
                     continue
 
                 # Process batch
