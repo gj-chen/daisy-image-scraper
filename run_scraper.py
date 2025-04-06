@@ -1,6 +1,10 @@
 
 from scraper.scraper import scrape_page
 import logging
+
+from utils.storage_utils import clear_storage
+
+
 from multiprocessing import Pool, cpu_count
 from config import SCRAPER_SEED_URLS
 
@@ -42,6 +46,8 @@ def process_url_chunk(urls):
     return results
 
 def main():
+    # Clear storage before starting
+    clear_storage()
     num_workers = max(1, cpu_count() - 1)
     print(f"Starting distributed scraping with {num_workers} workers")
     
