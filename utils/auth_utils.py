@@ -16,8 +16,11 @@ class AuthSession:
             # Parse cookie string into dict
             cookie_pairs = SHEERLUXE_COOKIE.split(';')
             for pair in cookie_pairs:
-                key, value = pair.strip().split('=', 1)
-                self.cookies[key] = value
+                if '=' in pair:
+                    parts = pair.strip().split('=')
+                    key = parts[0]
+                    value = '='.join(parts[1:])  # Join back parts in case value contains =
+                    self.cookies[key] = value
             logger.info("Successfully initialized auth session with cookies")
         except Exception as e:
             logger.error(f"Failed to parse cookie: {e}")
