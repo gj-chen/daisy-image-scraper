@@ -5,8 +5,11 @@ from time import sleep
 import logging
 from typing import List, Optional
 import os
-import openai
+from openai import OpenAI
 from utils.openai_utils import generate_gpt_structured_metadata_sync
+
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 from utils.db_utils import generate_embedding_sync, insert_metadata_to_supabase_sync, prepare_metadata_record
 
 # Initialize OpenAI client
