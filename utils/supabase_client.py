@@ -1,5 +1,10 @@
-# utils/supabase_client.py
 from supabase import create_client
-from config import SUPABASE_URL, SUPABASE_KEY
+import os
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("Missing Supabase URL or Key environment variables.")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)

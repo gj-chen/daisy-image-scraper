@@ -1,32 +1,55 @@
-# main.py
-from scraper.scraper import SheerLuxeScraper
-from scraper.metadata_generator import MetadataGenerator
-from scraper.embeddings_generator import EmbeddingsGenerator
-from scraper.uploader import Uploader
+from flask import Flask, request, jsonify
+from scraper.scraper import scrape_page
 from utils.supabase_client import supabase
-import json
+import logging
+import os
 
-def main(test_url):
-    scraper = SheerLuxeScraper()
-    scraped_items = scraper.scrape_page(test_url)
+logging.basicConfig(level=logging.INFO)
 
-    for item in scraped_items:
-        image_url = item["image_url"]
-        context_text = item["context"]
+app = Flask(__name__)
 
-        uploaded_image_url = Uploader.upload_image(image_url)
-        metadata_json = MetadataGenerator.generate(uploaded_image_url, context_text)
-        embeddings = EmbeddingsGenerator.generate(metadata_json)
+@app.route('/scrape', methods=['POST'])
+def scrape():
+    data = request.json
+    url = data.get('url')
 
-        supabase.table('moodboard_items').insert({
-            "image_url": uploaded_image_url,
-            "source_url": image_url,
-            "metadata": json.loads(metadata_json),
-            "embedding": embeddings
-        }).execute()
+    if not url:
+        return jsonify({"error": "URL parameter missing"}), 400
 
-        print(f"Processed and uploaded: {uploaded_image_url}")
+    logging.info(f"Scraping URL: {url}")
+
+    try:
+        images, metadata = scrape_page(url)
+
+        # Assuming scrape_page returns metadata structured as:
+        # {"title": "title", "description": "...", "embedding": [float...]}
+        embedding = metadata.pop("embedding", None)
+
+        # Insert each scraped image as a moodboard item into Supabase
+        for img_url in images:
+            response = supabase.table('moodboard_items').insert({
+                'image_url': img_url,
+                'source_url': url,
+                'title': metadata.get('title', 'No Title'),
+                'description': metadata.get('description', 'No Description'),
+                'metadata': metadata,
+                'embedding': embedding
+            }).execute()
+
+            if response.data:
+                logging.info(f"Successfully stored image {img_url}")
+            else:
+                logging.error(f"Error storing image {img_url}: {response.error}")
+
+        return jsonify({
+            "images": images,
+            "metadata": metadata,
+            "status": "success"
+        }), 200
+
+    except Exception as e:
+        logging.exception("An error occurred during scraping.")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    test_url = "https://sheerluxe.com/fashion/designer/the-ralph-lauren-spring-2025-collection-is-perfect-for-the-season-ahead"  # Clearly replace with actual test URL
-    main(test_url)
+    app.run(host='0.0.0.0', port=int(os.getenv("PORT", 8080)))
