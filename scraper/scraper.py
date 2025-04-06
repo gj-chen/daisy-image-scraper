@@ -144,16 +144,29 @@ class AsyncScraper:
             while True:  # Run continuously
                 if not self.frontier.has_urls:
                     logger.info("No URLs in frontier, waiting for new URLs...")
-                    await asyncio.sleep(60)  # Wait before checking again
+                    await asyncio.sleep(10)  # Reduced wait time
                     continue
+
+                # Get batch of URLs to process
+                current_batch = []
+                while len(current_batch) < 5 and self.frontier.has_urls:
+                    url, depth = self.frontier.get_next_url()
+                    if url not in self.frontier.visited and url not in [u for u, _ in current_batch]:
+                        current_batch.append((url, depth))
+
+                if not current_batch:
+                    continue
+
+                # Process batch
+                tasks = [self.process_url(url, depth) for url, depth in current_batch]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
                 
-                tasks = []
-                for _ in range(min(5, self.frontier.url_count)):  # Process up to 5 URLs concurrently
-                    if not self.frontier.has_urls:
-                        break
-                    current_url, depth = self.frontier.get_next_url()
-                    if current_url not in self.frontier.visited:
-                        tasks.append(self.process_url(current_url, depth))
+                # Mark URLs as visited only after processing
+                for (url, _), result in zip(current_batch, results):
+                    if isinstance(result, list):
+                        all_processed_images.extend(result)
+                    self.frontier.mark_visited(url)
+                    logger.info(f"Completed processing URL: {url}")
                 
                 if tasks:
                     results = await asyncio.gather(*tasks, return_exceptions=True)
