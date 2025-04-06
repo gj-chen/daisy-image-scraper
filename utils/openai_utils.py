@@ -28,7 +28,7 @@ def generate_gpt_structured_metadata(scraped_content):
     Content Summary: {scraped_content['content_summary']}
     Image Context: {scraped_content['image_context']}
 
-    Generate structured JSON metadata describing the product, fashion attributes, style context, occasion context, and body fit suitability, following exactly this schema:
+    Generate structured JSON metadata using exactly this schema:
 
     {{
       "product_info": {{
@@ -65,36 +65,45 @@ def generate_gpt_structured_metadata(scraped_content):
       }}
     }}
 
-    Fill out all fields accurately and briefly, based on provided content. Respond ONLY with valid JSON object (no markdown, no extra text).
+    Fill out all fields accurately and briefly, based on provided content. Respond ONLY with a valid JSON object (no markdown, no extra text).
     """
 
     response = client.chat.completions.create(
         model="gpt-4-turbo",
+        response_format={"type": "json_object"},
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,
+        timeout=60  # Explicit timeout
     )
 
     raw_content = response.choices[0].message.content.strip()
 
-    logging.info(f"Raw GPT response before cleaning: {raw_content}")
-
-    # Explicitly clean GPT response
-    cleaned_response = clean_gpt_response(raw_content)
-
-    logging.info(f"Cleaned GPT response: {cleaned_response}")
+    logging.info(f"Raw GPT response (JSON mode): {raw_content}")
 
     try:
-        structured_metadata = json.loads(cleaned_response)
+        structured_metadata = json.loads(raw_content)
     except json.JSONDecodeError as e:
-        logging.error(f"JSON decoding error: {e}")
-        logging.error(f"Cleaned GPT response: {cleaned_response}")
-        raise Exception(f"Failed to parse cleaned JSON: {e}")
+        logging.warning(f"JSON mode parsing failed, attempting cleanup. Error: {e}")
 
+        # Attempt to clean and retry parsing if explicit JSON mode fails unexpectedly
+        cleaned_response = clean_gpt_response(raw_content)
+        logging.info(f"Cleaned GPT response: {cleaned_response}")
+
+        try:
+            structured_metadata = json.loads(cleaned_response)
+        except json.JSONDecodeError as e_clean:
+            logging.error(f"Cleaned JSON parsing also failed: {e_clean}")
+            raise Exception(f"Failed to parse cleaned JSON: {e_clean}")
+
+    logging.info(f"Structured metadata parsed successfully: {structured_metadata}")
     return structured_metadata
 
 def get_embedding(text):
     response = client.embeddings.create(
         input=text,
-        model="text-embedding-ada-002"
+        model="text-embedding-ada-002",
+        timeout=30  # Explicit timeout
     )
-    return response.data[0].embedding
+    embedding_vector = response.data[0].embedding
+    logging.info(f"Generated embedding vector successfully (length: {len(embedding_vector)})")
+    return embedding_vector
