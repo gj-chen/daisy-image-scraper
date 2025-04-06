@@ -76,7 +76,12 @@ class AsyncScraper:
                 if not url.startswith(('http://', 'https://')):
                     url = f'https://{url}'
 
-                async with self.session.get(url, timeout=30) as response:
+                # Single attempt, no retries
+                async with self.session.get(url, timeout=10) as response:
+                    if response.status != 200:
+                        logger.info(f"Skipping failed URL {url} with status {response.status}")
+                        self.frontier.mark_visited(url)  # Mark as visited to prevent retries
+                        return []
                     if response.status == 403 or response.status == 401:
                         logger.error(f"Authentication required for {url}. Please check your SHEERLUXE_COOKIE environment variable.")
                         raise ScrapingError("Authentication failed - invalid or expired cookie")
