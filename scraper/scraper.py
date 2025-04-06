@@ -67,8 +67,8 @@ class AsyncScraper:
                         image_url = urljoin(url, raw_src)
                         if image_url in self.existing_images:
                             continue
-                        
-                            
+
+
                         context = {
                             "image_url": image_url,
                             "alt_text": img.get("alt", ""),
@@ -87,7 +87,7 @@ class AsyncScraper:
 
                             from utils.storage_utils import store_image
                             stored_image_url = store_image(image_url)
-                            
+
                             record = prepare_metadata_record(
                                 image_url=image_url,
                                 source_url=url,
@@ -111,7 +111,7 @@ class AsyncScraper:
                             record, url = result
                             batch_records.append(record)
                             batch_urls.append(url)
-                            
+
                     if batch_records:
                         insert_metadata_to_supabase_sync(batch_records)
                         inserted_images.extend(batch_urls)
@@ -135,7 +135,7 @@ class AsyncScraper:
                 url, depth = self.frontier.get_next_url()
                 if url not in self.frontier.visited:
                     urls_to_process.append((url, depth))
-            
+
             if urls_to_process:
                 tasks = [self.process_url(url, depth) for url, depth in urls_to_process]
                 results = await asyncio.gather(*tasks, return_exceptions=True)
