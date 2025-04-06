@@ -11,6 +11,7 @@ class URLFrontier:
     def __init__(self, max_depth: int = SCRAPER_MAX_DEPTH, max_age_years: int = SCRAPER_MAX_AGE_YEARS):
         self.queue = deque()
         self.visited = set()
+        self.pending = set()  # Track URLs in queue
         self.max_depth = max_depth
         self.max_age_years = max_age_years
 

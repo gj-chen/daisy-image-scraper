@@ -26,12 +26,12 @@ SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
 # Constants
 CLEAR_ON_RUN = True  # Clear storage and DB on new runs
 MAX_RETRIES = 3
-SCRAPER_CONCURRENCY_LIMIT = 100  # Increased concurrency for faster processing
+SCRAPER_CONCURRENCY_LIMIT = 200  # Double concurrency for faster processing
 SCRAPER_MAX_AGE_YEARS = 6  # Keep 6 years as requested
-SCRAPER_MAX_DEPTH = 5  # Increased depth to catch more pages
-BATCH_SIZE = 2000  # Increased batch size for DB operations
-URL_BATCH_SIZE = 2000  # Process more URLs at once
-IMAGE_BATCH_SIZE = 50  # Increased for better throughput while respecting rate limits
+SCRAPER_MAX_DEPTH = 10  # Double depth to catch more pages
+BATCH_SIZE = 5000  # Increased batch size for DB operations
+URL_BATCH_SIZE = 5000  # Process more URLs at once
+IMAGE_BATCH_SIZE = 100  # Double batch size for better throughput
 # Get seed URLs from environment variable, fallback to default if not set
 # Multiple entry points for parallel processing
 FASHION_SUBCATEGORIES = [

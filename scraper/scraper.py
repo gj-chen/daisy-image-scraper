@@ -19,6 +19,8 @@ class AsyncScraper:
         self.frontier = URLFrontier()
         self.sem = asyncio.Semaphore(concurrency_limit)
         self.session = None
+        self.url_cache = {}  # Cache URL responses
+        self.processing_tasks = set()  # Track active tasks
         # Cache existing items
         from utils.db_utils import get_existing_urls_and_images
         self.existing_urls, self.existing_images = get_existing_urls_and_images()
@@ -34,9 +36,12 @@ class AsyncScraper:
             await self.session.close()
 
     async def process_url(self, url: str, depth: int) -> List[str]:
+        if url in self.frontier.visited or url in self.frontier.pending:
+            return []
+            
+        self.frontier.pending.add(url)
         async with self.sem:
             try:
-                # Ensure URL has proper protocol
                 if not url.startswith(('http://', 'https://')):
                     url = f'https://{url}'
 
