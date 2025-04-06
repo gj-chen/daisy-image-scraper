@@ -11,13 +11,23 @@ def home():
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
-    url = request.json.get('url')
-    if not url:
-        logging.error("Missing URL")
-        return jsonify({"error": "URL required"}), 400
+    try:
+        url = request.json.get('url')
+        if not url:
+            logging.error("Missing URL")
+            return jsonify({"error": "URL required"}), 400
 
-    images = scrape_page(url)
-    return jsonify({"images": images, "inserted": len(images)}), 200
+        if not url.startswith(('http://', 'https://')):
+            return jsonify({"error": "Invalid URL format"}), 400
+
+        images = scrape_page(url)
+        return jsonify({"images": images, "inserted": len(images)}), 200
+    except requests.RequestException as e:
+        logging.error(f"Request failed: {str(e)}")
+        return jsonify({"error": "Failed to fetch URL"}), 502
+    except Exception as e:
+        logging.error(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
