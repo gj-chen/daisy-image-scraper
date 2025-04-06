@@ -24,8 +24,7 @@ def store_image(image_url: str) -> str:
             filename,
             response.content,
             file_options={
-                "content-type": response.headers.get("content-type", "image/jpeg"),
-                "upsert": True
+                "contentType": response.headers.get("content-type", "image/jpeg")
             }
         )
         
