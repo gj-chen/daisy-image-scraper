@@ -14,10 +14,13 @@ class URLFrontier:
         self.max_depth = max_depth
         self.max_age_years = max_age_years
 
-    def add_url(self, url: str, depth: int = 0):
-        if not url.startswith(('http://', 'https://')):
-            url = f'https://{url}'
-        if depth <= self.max_depth and url not in self.visited:
+    def add_url(self, url: str, depth: int = 0) -> None:
+        if not url or not isinstance(url, str):
+            return
+        url = url.strip()
+        if (url not in self.visited and 
+            url.startswith(('http://', 'https://')) and
+            'sheerluxe.com/fashion' in url):
             self.queue.append((url, depth))
 
     def get_next_url(self) -> Optional[tuple[str, int]]:
@@ -38,7 +41,7 @@ class URLFrontier:
     @property
     def has_urls(self) -> bool:
         return len(self.queue) > 0
-        
+
     @property
     def url_count(self) -> int:
         return len(self.queue)

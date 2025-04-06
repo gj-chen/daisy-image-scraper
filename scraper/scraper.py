@@ -132,8 +132,12 @@ class AsyncScraper:
 
                         # Insert any remaining records
                         if batch_records:
-                            insert_metadata_to_supabase_sync(batch_records)
-                            batch_records = []
+                            try:
+                                insert_metadata_to_supabase_sync(batch_records)
+                            except Exception as e:
+                                logger.error(f"Failed to insert batch: {str(e)}")
+                            finally:
+                                batch_records = []
 
                     return inserted_images
 
@@ -147,7 +151,7 @@ class AsyncScraper:
         all_processed_images = []
         pending_tasks = []
         processed_count = 0
-        
+
         logger.info(f"Starting crawl from seed URL: {seed_url}")
 
         try:
