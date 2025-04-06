@@ -10,15 +10,22 @@ def store_image(image_url: str) -> str:
     try:
         response = requests.get(image_url)
         if response.status_code != 200:
+            logger.error(f"Failed to fetch image {image_url}: HTTP {response.status_code}")
             return None
             
-        filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{image_url.split('/')[-1]}"
+        # Clean filename - remove query parameters and special characters
+        base_name = image_url.split('?')[0].split('/')[-1]
+        safe_name = re.sub(r'[^a-zA-Z0-9.-]', '_', base_name)
+        filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
         
-        # Upload to Supabase Storage
+        # Upload to Supabase Storage with upsert option
         result = supabase.storage.from_('sheerluxe-images').upload(
             filename,
             response.content,
-            file_options={"content-type": response.headers.get("content-type", "image/jpeg")}
+            file_options={
+                "content-type": response.headers.get("content-type", "image/jpeg"),
+                "upsert": True
+            }
         )
         
         # Get public URL
