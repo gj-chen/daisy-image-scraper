@@ -154,7 +154,7 @@ class AsyncScraper:
                 all_processed_images.extend(processed_images)
                 self.frontier.mark_visited(current_url)
 
-                await asyncio.sleep(0.1)  # Reduced rate limiting to 100ms
+                await asyncio.sleep(1)  # Standard 1 second rate limiting
 
         finally:
             await self.close()
