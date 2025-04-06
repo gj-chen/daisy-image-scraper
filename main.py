@@ -4,6 +4,10 @@ import asyncio
 
 app = Flask(__name__)
 
+@app.route('/')
+def home():
+    return jsonify({"message": "Welcome to the Scraper API", "endpoints": ["/scrape"]}), 200
+
 @app.route('/scrape', methods=['POST'])
 def scrape():
     data = request.json
