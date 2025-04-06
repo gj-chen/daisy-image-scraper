@@ -91,7 +91,7 @@ class AsyncScraper:
                                 continue
 
                             from utils.storage_utils import store_image
-                            stored_image_url = store_image(image_url)
+                            stored_image_url = store_image(image_url, self.existing_images)
                             if not stored_image_url:
                                 continue
 

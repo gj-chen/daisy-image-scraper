@@ -7,8 +7,13 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-def store_image(image_url: str) -> str:
+def store_image(image_url: str, existing_images=None) -> str:
     try:
+        # Check if image already exists in our known set
+        if existing_images and image_url in existing_images:
+            logger.info(f"Image already exists: {image_url}")
+            return image_url
+            
         response = requests.get(image_url)
         if response.status_code != 200:
             logger.error(f"Failed to fetch image {image_url}: HTTP {response.status_code}")
