@@ -1,6 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+from time import sleep
+import logging
+from typing import List, Optional
 from utils.openai_utils import generate_gpt_structured_metadata_sync
 from utils.db_utils import generate_embedding_sync, insert_metadata_to_supabase_sync, prepare_metadata_record
 import logging

@@ -24,10 +24,13 @@ def scrape():
         return jsonify({"images": images, "inserted": len(images)}), 200
     except requests.RequestException as e:
         logging.error(f"Request failed: {str(e)}")
-        return jsonify({"error": "Failed to fetch URL"}), 502
+        return jsonify({"error": str(e), "type": "request_error"}), 502
+    except ValueError as e:
+        logging.error(f"Validation error: {str(e)}")
+        return jsonify({"error": str(e), "type": "validation_error"}), 400
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({"error": "Internal server error", "type": "server_error"}), 500
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
