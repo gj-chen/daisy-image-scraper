@@ -11,7 +11,7 @@ language = "python3"
 requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
-run = ["sh", "-c", "gunicorn --workers 4 --timeout 180 --graceful-timeout 120 --bind 0.0.0.0:5000 main:app & python run_scraper.py --worker-id=1 --total-workers=4 & python run_scraper.py --worker-id=2 --total-workers=4 & python run_scraper.py --worker-id=3 --total-workers=4 & python run_scraper.py --worker-id=4 --total-workers=4 & python monitor.py"]
+run = ["sh", "-c", "gunicorn --workers 8 --timeout 180 --graceful-timeout 120 --bind 0.0.0.0:5000 main:app & python run_scraper.py --worker-id=1 --total-workers=8 & python run_scraper.py --worker-id=2 --total-workers=8 & python run_scraper.py --worker-id=3 --total-workers=8 & python run_scraper.py --worker-id=4 --total-workers=8 & python run_scraper.py --worker-id=5 --total-workers=8 & python run_scraper.py --worker-id=6 --total-workers=8 & python run_scraper.py --worker-id=7 --total-workers=8 & python run_scraper.py --worker-id=8 --total-workers=8 & python monitor.py"]
 deploymentTarget = "cloudrun"
 
 [[ports]]
