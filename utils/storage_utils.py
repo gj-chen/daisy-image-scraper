@@ -9,10 +9,28 @@ logger = logging.getLogger(__name__)
 
 def store_image(image_url: str, existing_images=None) -> str:
     try:
-        # Check if image already exists in our known set
+        # Quick check against known images first
         if existing_images and image_url in existing_images:
-            logger.info(f"Image already exists: {image_url}")
+            logger.info(f"Image exists in DB: {image_url}")
             return image_url
+            
+        # Get base filename for storage check
+        base_name = image_url.split('?')[0].split('/')[-1]
+        safe_name = re.sub(r'[^a-zA-Z0-9.-]', '_', base_name)
+        
+        # Only check storage if not in DB
+        storage_cache = getattr(store_image, '_storage_cache', None)
+        if storage_cache is None:
+            try:
+                storage_cache = {item['name'] for item in supabase.storage.from_('sheerluxe-images').list()}
+                store_image._storage_cache = storage_cache
+            except Exception as e:
+                logger.warning(f"Storage cache init failed: {str(e)}")
+                storage_cache = set()
+        
+        if any(item.endswith(safe_name) for item in storage_cache):
+            logger.info(f"Image exists in storage: {image_url}")
+            return f"https://kepdfmsdvrlsloyilqsw.supabase.co/storage/v1/object/sheerluxe-images/{safe_name}"
             
         response = requests.get(image_url)
         if response.status_code != 200:
