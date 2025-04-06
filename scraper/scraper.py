@@ -141,17 +141,30 @@ class AsyncScraper:
                     self.frontier.mark_visited(url)
 
         try:
-            while self.frontier.has_urls:
-                current_url, depth = self.frontier.get_next_url()
-                if current_url in self.frontier.visited:
+            while True:  # Run continuously
+                if not self.frontier.has_urls:
+                    logger.info("No URLs in frontier, waiting for new URLs...")
+                    await asyncio.sleep(60)  # Wait before checking again
                     continue
+                
+                tasks = []
+                for _ in range(min(5, self.frontier.url_count)):  # Process up to 5 URLs concurrently
+                    if not self.frontier.has_urls:
+                        break
+                    current_url, depth = self.frontier.get_next_url()
+                    if current_url not in self.frontier.visited:
+                        tasks.append(self.process_url(current_url, depth))
+                
+                if tasks:
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
+                    for result in results:
+                        if isinstance(result, list):
+                            all_processed_images.extend(result)
+                    
+                    await asyncio.sleep(1)  # Rate limiting between batches
 
-                processed_images = await self.process_url(current_url, depth)
-                all_processed_images.extend(processed_images)
-                self.frontier.mark_visited(current_url)
-
-                await asyncio.sleep(1)  # Standard 1 second rate limiting
-
+        except asyncio.CancelledError:
+            logger.info("Crawling cancelled")
         finally:
             await self.close()
 
