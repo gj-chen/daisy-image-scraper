@@ -10,11 +10,12 @@ logger = logging.getLogger(__name__)
 supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def insert_metadata_to_supabase_sync(metadata_list, batch_size=BATCH_SIZE):
+def insert_metadata_to_supabase_sync(metadata_list, batch_size=100):  # Reduced from 5000 to 100
     try:
         # Pre-process and deduplicate records
         seen_urls = set()
         processed_records = []
+        failed_records = []
         
         for record in metadata_list:
             if record['image_url'] not in seen_urls:
@@ -27,16 +28,31 @@ def insert_metadata_to_supabase_sync(metadata_list, batch_size=BATCH_SIZE):
         if not processed_records:
             return
             
-        # Split into optimal sized batches
+        # Split into smaller batches
         batches = [processed_records[i:i + batch_size] 
                   for i in range(0, len(processed_records), batch_size)]
         
-        # Use upsert to handle duplicates gracefully
+        # Use upsert with error handling per batch
         for batch in batches:
-            supabase_client.table('moodboard_items')\
-                .upsert(batch, on_conflict='image_url')\
-                .execute()
-            logger.info(f"Upserted batch of {len(batch)} records")
+            try:
+                supabase_client.table('moodboard_items')\
+                    .upsert(batch, on_conflict='image_url')\
+                    .execute()
+                logger.info(f"Upserted batch of {len(batch)} records")
+            except Exception as e:
+                logger.error(f"Failed to upsert batch: {str(e)}")
+                failed_records.extend(batch)
+                continue
+                
+        # Retry failed records individually
+        for record in failed_records:
+            try:
+                supabase_client.table('moodboard_items')\
+                    .upsert([record], on_conflict='image_url')\
+                    .execute()
+                logger.info("Recovered failed record")
+            except Exception as e:
+                logger.error(f"Failed to recover record {record['image_url']}: {str(e)}")
             
     except Exception as e:
         logger.error(f"Supabase Error: {e}")
