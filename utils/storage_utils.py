@@ -42,7 +42,7 @@ def store_image(image_url: str, existing_images=None) -> str:
         storage_cache = getattr(store_image, '_storage_cache', None)
         if storage_cache is None:
             try:
-                storage_cache = {item['name'] for item in supabase.storage.from_('sheerluxe-images').list()}
+                storage_cache = {item['name'] for item in supabase_client.storage.from_('sheerluxe-images').list()}
                 store_image._storage_cache = storage_cache
             except Exception as e:
                 logger.warning(f"Storage cache init failed: {str(e)}")
