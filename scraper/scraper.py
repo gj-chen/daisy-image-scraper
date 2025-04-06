@@ -60,55 +60,69 @@ class AsyncScraper:
                             logger.info(f"Found new URL: {new_url}")
                             self.frontier.add_url(new_url, depth + 1)
 
-                    # Process images in batches
+                    # Process images in larger batches
                     images = soup.find_all("img")
                     inserted_images = []
-                    image_batch = []
+                    batch_records = []
+                    batch_size = 5  # Process 5 images at a time
 
-                    for img in images:
-                        raw_src = img.get("src")
-                        if not raw_src or not raw_src.startswith(('http://', 'https://')):
-                            continue
+                    valid_images = [
+                        (img, urljoin(url, img.get("src")))
+                        for img in images
+                        if img.get("src") and img.get("src").startswith(('http://', 'https://'))
+                    ]
 
-                        image_url = urljoin(url, raw_src)
-                        if image_url in self.existing_images:
-                            continue
-
-                        context = {
-                            "image_url": image_url,
-                            "alt_text": img.get("alt", ""),
-                            "title": soup.title.string if soup.title else "",
-                            "surrounding_text": img.parent.get_text(strip=True) if img.parent else ""
-                        }
-
-                        try:
-                            metadata = generate_gpt_structured_metadata_sync(context)
-                            if not metadata:
+                    for i in range(0, len(valid_images), batch_size):
+                        batch = valid_images[i:i + batch_size]
+                        for img, image_url in batch:
+                            if image_url in self.existing_images:
                                 continue
 
-                            embedding = generate_embedding_sync(metadata)
-                            if not embedding:
+                            try:
+                                context = {
+                                    "image_url": image_url,
+                                    "alt_text": img.get("alt", ""),
+                                    "title": soup.title.string if soup.title else "",
+                                    "surrounding_text": img.parent.get_text(strip=True) if img.parent else ""
+                                }
+
+                                metadata = generate_gpt_structured_metadata_sync(context)
+                                if not metadata:
+                                    continue
+
+                                embedding = generate_embedding_sync(metadata)
+                                if not embedding:
+                                    continue
+
+                                from utils.storage_utils import store_image
+                                stored_image_url = store_image(image_url, self.existing_images)
+                                if not stored_image_url:
+                                    continue
+
+                                record = prepare_metadata_record(
+                                    image_url=image_url,
+                                    source_url=url,
+                                    title=context['title'],
+                                    description=context['alt_text'],
+                                    structured_metadata=metadata,
+                                    embedding=embedding,
+                                    stored_image_url=stored_image_url
+                                )
+                                batch_records.append(record)
+                                inserted_images.append(image_url)
+
+                                if len(batch_records) >= batch_size:
+                                    insert_metadata_to_supabase_sync(batch_records)
+                                    batch_records = []
+
+                            except Exception as e:
+                                logger.error(f"Failed processing image {image_url}: {str(e)}")
                                 continue
 
-                            from utils.storage_utils import store_image
-                            stored_image_url = store_image(image_url, self.existing_images)
-                            if not stored_image_url:
-                                continue
-
-                            record = prepare_metadata_record(
-                                image_url=image_url,
-                                source_url=url,
-                                title=context['title'],
-                                description=context['alt_text'],
-                                structured_metadata=metadata,
-                                embedding=embedding,
-                                stored_image_url=stored_image_url
-                            )
-                            insert_metadata_to_supabase_sync([record])
-                            inserted_images.append(image_url)
-                        except Exception as e:
-                            logger.error(f"Failed processing image {image_url}: {str(e)}")
-                            continue
+                        # Insert any remaining records
+                        if batch_records:
+                            insert_metadata_to_supabase_sync(batch_records)
+                            batch_records = []
 
                     return inserted_images
 

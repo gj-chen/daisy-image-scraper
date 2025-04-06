@@ -1,4 +1,3 @@
-
 import os
 from dotenv import load_dotenv
 from typing import Optional
@@ -26,11 +25,11 @@ SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
 
 # Constants
 MAX_RETRIES = 3
-SCRAPER_CONCURRENCY_LIMIT = 20  # Double concurrency
+SCRAPER_CONCURRENCY_LIMIT = 30  # Increased concurrency
 SCRAPER_MAX_AGE_YEARS = 3
 SCRAPER_MAX_DEPTH = 3
-BATCH_SIZE = 100  # Double batch size 
-URL_BATCH_SIZE = 200  # Double URL batch size
-IMAGE_BATCH_SIZE = 10  # Process images in batches
+BATCH_SIZE = 200  # Increased batch size
+URL_BATCH_SIZE = 300  # Increased URL batch size
+IMAGE_BATCH_SIZE = 5  # Smaller image batches for faster processing
 # Get seed URLs from environment variable, fallback to default if not set
 SCRAPER_SEED_URLS = get_optional_env("SCRAPER_SEED_URLS", "https://sheerluxe.com").split(",")
