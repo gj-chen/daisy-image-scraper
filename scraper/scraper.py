@@ -89,9 +89,17 @@ class AsyncScraper:
                         if img.get("src") and img.get("src").startswith(('http://', 'https://'))
                     ]
 
+                    async def process_image_batch(batch):
+                        tasks = []
+                        for img, image_url in batch:
+                            if image_url in self.existing_images:
+                                continue
+                            tasks.append(self.process_single_image(img, image_url, url, context))
+                        return await asyncio.gather(*tasks, return_exceptions=True)
+
                     for i in range(0, len(valid_images), batch_size):
                         batch = valid_images[i:i + batch_size]
-                        for img, image_url in batch:
+                        results = await process_image_batch(batch)
                             if image_url in self.existing_images:
                                 continue
 

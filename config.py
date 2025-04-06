@@ -29,9 +29,9 @@ MAX_RETRIES = 3
 SCRAPER_CONCURRENCY_LIMIT = 100  # Increased concurrency for faster processing
 SCRAPER_MAX_AGE_YEARS = 6  # Keep 6 years as requested
 SCRAPER_MAX_DEPTH = 5  # Increased depth to catch more pages
-BATCH_SIZE = 1000  # Increased batch size for DB operations
-URL_BATCH_SIZE = 1000  # Process more URLs at once
-IMAGE_BATCH_SIZE = 20  # Increased while respecting OpenAI rate limits
+BATCH_SIZE = 2000  # Increased batch size for DB operations
+URL_BATCH_SIZE = 2000  # Process more URLs at once
+IMAGE_BATCH_SIZE = 50  # Increased for better throughput while respecting rate limits
 # Get seed URLs from environment variable, fallback to default if not set
 # Multiple entry points for parallel processing
 FASHION_SUBCATEGORIES = [
