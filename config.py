@@ -31,3 +31,4 @@ SCRAPER_MAX_AGE_YEARS = 3
 SCRAPER_MAX_DEPTH = 3
 BATCH_SIZE = 50  # For batch DB operations
 URL_BATCH_SIZE = 100  # For URL frontier processing
+SCRAPER_SEED_URL = "https://sheerluxe.com"  # Seed URL for crawling
