@@ -102,6 +102,9 @@ class AsyncScraper:
                             )
 
                             return record, image_url
+                        except Exception as e:
+                            logger.error(f"Failed processing image {image_url}: {str(e)}")
+                            continue
 
                     batch_records = []
                     batch_urls = []
@@ -122,9 +125,6 @@ class AsyncScraper:
                         insert_metadata_to_supabase_sync(batch_records)
                         inserted_images.extend(batch_urls)
                         logger.info(f"Processed batch of {len(batch_records)} images")
-
-                        except Exception as e:
-                            logger.error(f"Failed processing image {image_url}: {str(e)}")
 
                     return inserted_images
 
