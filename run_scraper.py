@@ -1,8 +1,15 @@
 
 from scraper.scraper import scrape_page
 import logging
+import os
+import json
+from datetime import datetime
+from pathlib import Path
 
 from utils.storage_utils import clear_storage
+
+# File to store the last scrape date
+LAST_SCRAPE_FILE = "last_scrape.json"
 
 
 from multiprocessing import Pool, cpu_count
@@ -59,9 +66,17 @@ def process_url_chunk(urls):
     return results
 
 def main():
-    # Only clear storage if explicitly requested
+    # Set to clear storage for this run
+    os.environ['CLEAR_STORAGE'] = 'true'
     if os.environ.get('CLEAR_STORAGE', '').lower() == 'true':
         clear_storage()
+    
+    # Track scraping date
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    scrape_data = {"last_scrape_date": current_date}
+    with open(LAST_SCRAPE_FILE, 'w') as f:
+        json.dump(scrape_data, f)
+        
     num_workers = max(1, cpu_count() - 1)
     print(f"Starting distributed scraping with {num_workers} workers")
     
