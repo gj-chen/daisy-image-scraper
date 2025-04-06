@@ -135,16 +135,30 @@ class AsyncScraper:
 
                     for i in range(0, len(valid_images), batch_size):
                         batch = valid_images[i:i + batch_size]
-                        results = await process_image_batch(batch)
-
+                        
+                        # Create contexts for each image in batch
+                        batch_contexts = []
+                        for img, image_url in batch:
+                            context = {
+                                "image_url": image_url,
+                                "alt_text": img.get("alt", ""),
+                                "title": soup.title.string if soup.title else "",
+                                "surrounding_text": img.parent.get_text(strip=True) if img.parent else ""
+                            }
+                            batch_contexts.append(context)
+                            
+                        # Process batch with contexts
+                        results = []
+                        for j, (img, image_url) in enumerate(batch):
+                            if image_url in self.existing_images:
+                                continue
+                                
+                            result = await self.process_single_image(img, image_url, url, batch_contexts[j])
+                            if result:  # Only append if metadata was generated successfully
+                                results.append(result)
+                                
+                        # Process valid results
                         for result in results:
-                            try:
-                                context = {
-                                    "image_url": image_url,
-                                    "alt_text": img.get("alt", ""),
-                                    "title": soup.title.string if soup.title else "",
-                                    "surrounding_text": img.parent.get_text(strip=True) if img.parent else ""
-                                }
 
                                 metadata = generate_gpt_structured_metadata_sync(context)
                                 if not metadata:
