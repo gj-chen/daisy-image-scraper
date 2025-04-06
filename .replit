@@ -19,7 +19,6 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Run Scraper"
 
 [[workflows.workflow]]
 name = "Run Flask"
@@ -38,3 +37,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_scraper.py"
+
+[[workflows.workflow]]
+name = "Monitor"
+author = 28026932
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python monitor.py"
