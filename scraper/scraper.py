@@ -14,7 +14,7 @@ from utils.db_utils import generate_embedding_sync, insert_metadata_to_supabase_
 logger = logging.getLogger(__name__)
 
 class AsyncScraper:
-    def __init__(self, concurrency_limit: int = 5):
+    def __init__(self, concurrency_limit: int = SCRAPER_CONCURRENCY_LIMIT):
         self.frontier = URLFrontier()
         self.sem = asyncio.Semaphore(concurrency_limit)
         self.session = None

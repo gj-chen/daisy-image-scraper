@@ -8,7 +8,7 @@ import re
 logger = logging.getLogger(__name__)
 
 class URLFrontier:
-    def __init__(self, max_depth: int = 3, max_age_years: int = 3):
+    def __init__(self, max_depth: int = SCRAPER_MAX_DEPTH, max_age_years: int = SCRAPER_MAX_AGE_YEARS):
         self.queue = deque()
         self.visited = set()
         self.max_depth = max_depth
