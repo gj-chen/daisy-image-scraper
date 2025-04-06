@@ -32,21 +32,15 @@ def generate_embedding_sync(metadata):
         return []
 
 
-def check_url_exists(url: str) -> bool:
+def get_existing_urls_and_images():
     try:
-        result = supabase_client.table('moodboard_items').select('id').eq('source_url', url).execute()
-        return len(result.data) > 0
+        result = supabase_client.table('moodboard_items').select('source_url,image_url').execute()
+        urls = {item['source_url'] for item in result.data if item['source_url']}
+        images = {item['image_url'] for item in result.data if item['image_url']}
+        return urls, images
     except Exception as e:
-        logger.error(f"Failed to check URL existence: {e}")
-        return False
-
-def check_image_exists(image_url: str) -> bool:
-    try:
-        result = supabase_client.table('moodboard_items').select('id').eq('image_url', image_url).execute()
-        return len(result.data) > 0
-    except Exception as e:
-        logger.error(f"Failed to check image existence: {e}")
-        return False
+        logger.error(f"Failed to fetch existing URLs and images: {e}")
+        return set(), set()
 
 def prepare_metadata_record(image_url, source_url, title, description, structured_metadata, embedding, stored_image_url=None):
     return {

@@ -49,7 +49,7 @@ class AsyncScraper:
                         new_url = urljoin(url, link["href"])
                         if ("sheerluxe.com" in new_url and 
                             self.frontier.is_valid_date(new_url) and 
-                            not check_url_exists(new_url)):
+                            new_url not in self.frontier.visited):
                             self.frontier.add_url(new_url, depth + 1)
 
                     # Process images
@@ -62,9 +62,10 @@ class AsyncScraper:
                             continue
 
                         image_url = urljoin(url, raw_src)
-                        if check_image_exists(image_url):
+                        if image_url in self.frontier.processed_images:
                             logger.info(f"Skipping already processed image: {image_url}")
                             continue
+                        self.frontier.processed_images.add(image_url)
                             
                         context = {
                             "image_url": image_url,
@@ -110,6 +111,13 @@ class AsyncScraper:
 
     async def crawl(self, seed_url: str) -> List[str]:
         await self.init_session()
+        
+        # Pre-load existing URLs and images from DB
+        from utils.db_utils import get_existing_urls_and_images
+        existing_urls, existing_images = get_existing_urls_and_images()
+        self.frontier.visited.update(existing_urls)
+        self.frontier.processed_images.update(existing_images)
+        
         self.frontier.add_url(seed_url)
         all_processed_images = []
 
