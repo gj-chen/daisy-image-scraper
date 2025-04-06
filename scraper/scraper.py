@@ -90,11 +90,6 @@ class AsyncScraper:
                             if not embedding:
                                 continue
 
-                            from utils.storage_utils import store_image
-                            stored_image_url = store_image(image_url, self.existing_images)
-                            if not stored_image_url:
-                                continue
-
                             metadata = generate_gpt_structured_metadata_sync(context)
                             if not metadata:
                                 continue
@@ -102,8 +97,13 @@ class AsyncScraper:
                             embedding = generate_embedding_sync(metadata)
                             if not embedding:
                                 continue
-                            if stored_image_url:
-                                record = prepare_metadata_record(
+
+                            from utils.storage_utils import store_image
+                            stored_image_url = store_image(image_url, self.existing_images)
+                            if not stored_image_url:
+                                continue
+
+                            record = prepare_metadata_record(
                                     image_url=image_url,
                                     source_url=url,
                                     title=context['title'],
