@@ -136,77 +136,75 @@ class AsyncScraper:
                     for i in range(0, len(valid_images), batch_size):
                         batch = valid_images[i:i + batch_size]
 
-                        # Create contexts for each image in batch
-                        batch_contexts = []
-                        for img, image_url in batch:
-                            context = {
+                        # Filter out existing images first
+                        filtered_batch = [(img, image_url) for img, image_url in batch if image_url not in self.existing_images]
+                        if not filtered_batch:
+                            continue
+
+                        # Create contexts for filtered batch
+                        contexts = [
+                            {
                                 "image_url": image_url,
                                 "alt_text": img.get("alt", ""),
                                 "title": soup.title.string if soup.title else "",
                                 "surrounding_text": img.parent.get_text(strip=True) if img.parent else ""
                             }
-                            batch_contexts.append(context)
+                            for img, image_url in filtered_batch
+                        ]
 
-                        # Process batch with contexts
-                        results = []
-                        for j, (img, image_url) in enumerate(batch):
-                            if image_url in self.existing_images:
+                        # Process all images in parallel
+                        tasks = [
+                            self.process_single_image(img, image_url, url, context)
+                            for (img, image_url), context in zip(filtered_batch, contexts)
+                        ]
+                        results = await asyncio.gather(*tasks)
+                        results = [r for r in results if r]  # Filter out None results
+
+                        # Process valid results
+                        for result in results:
+                            metadata = generate_gpt_structured_metadata_sync(result['context'])
+                            if not metadata:
+                                logger.info(f"Skipping image {result['image_url']} - empty metadata")
                                 continue
 
-                            try:
-                                result = await self.process_single_image(img, image_url, url, batch_contexts[j])
-                                if result:  # Only append if metadata was generated successfully
-                                    results.append(result)
+                            # Recursive function to check if nested dict has any non-empty values
+                            def has_content(d):
+                                if isinstance(d, dict):
+                                    return any(has_content(v) for v in d.values())
+                                elif isinstance(d, list):
+                                    return len(d) > 0
+                                elif isinstance(d, str):
+                                    return bool(d.strip())
+                                return False
 
-                                # Process valid results
-                                for result in results:
-                                    metadata = generate_gpt_structured_metadata_sync(result['context'])
-                                    if not metadata:
-                                        logger.info(f"Skipping image {image_url} - empty metadata")
-                                        continue
-
-                                    # Recursive function to check if nested dict has any non-empty values
-                                    def has_content(d):
-                                        if isinstance(d, dict):
-                                            return any(has_content(v) for v in d.values())
-                                        elif isinstance(d, list):
-                                            return len(d) > 0
-                                        elif isinstance(d, str):
-                                            return bool(d.strip())
-                                        return False
-
-                                    if not has_content(metadata):
-                                        logger.info(f"Skipping image {image_url} - empty metadata content")
-                                        continue
-
-                                    embedding = generate_embedding_sync(metadata)
-                                    if not embedding:
-                                        continue
-
-                                    from utils.storage_utils import store_image
-                                    stored_image_url = store_image(image_url, self.existing_images)
-                                    if not stored_image_url:
-                                        continue
-
-                                    record = prepare_metadata_record(
-                                        image_url=image_url,
-                                        source_url=url,
-                                        title=result['context']['title'],
-                                        description=result['context']['alt_text'],
-                                        structured_metadata=metadata,
-                                        embedding=embedding,
-                                        stored_image_url=stored_image_url
-                                    )
-                                    batch_records.append(record)
-                                    inserted_images.append(image_url)
-
-                                    if len(batch_records) >= batch_size:
-                                        insert_metadata_to_supabase_sync(batch_records)
-                                        batch_records = []
-
-                            except Exception as e:
-                                logger.error(f"Failed processing image {image_url}: {str(e)}")
+                            if not has_content(metadata):
+                                logger.info(f"Skipping image {result['image_url']} - empty metadata content")
                                 continue
+
+                            embedding = generate_embedding_sync(metadata)
+                            if not embedding:
+                                continue
+
+                            from utils.storage_utils import store_image
+                            stored_image_url = store_image(result['image_url'], self.existing_images)
+                            if not stored_image_url:
+                                continue
+
+                            record = prepare_metadata_record(
+                                image_url=result['image_url'],
+                                source_url=url,
+                                title=result['context']['title'],
+                                description=result['context']['alt_text'],
+                                structured_metadata=metadata,
+                                embedding=embedding,
+                                stored_image_url=stored_image_url
+                            )
+                            batch_records.append(record)
+                            inserted_images.append(result['image_url'])
+
+                            if len(batch_records) >= batch_size:
+                                insert_metadata_to_supabase_sync(batch_records)
+                                batch_records = []
 
                         # Insert any remaining records
                         if batch_records:
