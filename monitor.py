@@ -31,7 +31,11 @@ def monitor_scraper():
     while True:
         try:
             response = requests.get(health_endpoint)
-            if response.status_code != 200:
+            if response.status_code == 200:
+                send_sms_notification(
+                    "Scraper Status: Running normally ✓"
+                )
+            else:
                 send_sms_notification(
                     f"Scraper Alert: Health check failed with status {response.status_code}"
                 )
