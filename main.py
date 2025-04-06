@@ -11,7 +11,11 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return jsonify({"message": "Welcome to the Scraper API", "endpoints": ["/scrape"]}), 200
+    return jsonify({"message": "Welcome to the Scraper API", "endpoints": ["/scrape", "/health"]}), 200
+
+@app.route('/health')
+def health():
+    return jsonify({"status": "healthy"}), 200
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
