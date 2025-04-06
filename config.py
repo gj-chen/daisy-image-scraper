@@ -33,11 +33,13 @@ URL_BATCH_SIZE = 300  # Increased URL batch size
 IMAGE_BATCH_SIZE = 5  # Smaller image batches for faster processing
 # Get seed URLs from environment variable, fallback to default if not set
 # Multiple entry points for parallel processing
-DEFAULT_SEEDS = [
-    "https://sheerluxe.com/fashion/shopping",
-    "https://sheerluxe.com/fashion/designer",
-    "https://sheerluxe.com/fashion/high-street",
-    "https://sheerluxe.com/fashion/trends",
-    "https://sheerluxe.com/fashion/dresses"
+FASHION_SUBCATEGORIES = [
+    "designer", "how-to-wear", "interviews", "shopping", "high-street",
+    "inspiration", "shoots", "conscious-edit", "denim", "trends",
+    "dresses", "tops", "knits", "accessories", "jewellery",
+    "shoes", "activewear", "bags", "holiday", "lounge-nightwear",
+    "occasion", "skirts-trousers", "workwear"
 ]
+
+DEFAULT_SEEDS = [f"https://sheerluxe.com/fashion/{cat}" for cat in FASHION_SUBCATEGORIES]
 SCRAPER_SEED_URLS = get_optional_env("SCRAPER_SEED_URLS", ",".join(DEFAULT_SEEDS)).split(",")
