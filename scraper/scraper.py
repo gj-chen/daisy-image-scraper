@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timedelta
 import re
 from .url_frontier import URLFrontier
-from config import SCRAPER_CONCURRENCY_LIMIT
+from config import SCRAPER_CONCURRENCY_LIMIT, SCRAPER_SEED_URLS
 from utils.openai_utils import generate_gpt_structured_metadata_sync
 from utils.db_utils import generate_embedding_sync, insert_metadata_to_supabase_sync, prepare_metadata_record
 
