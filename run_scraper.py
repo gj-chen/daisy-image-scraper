@@ -43,6 +43,9 @@ def process_url_chunk(urls):
     total = len(urls)
     for idx, url in enumerate(urls, 1):
         try:
+            # Ensure URL has proper format
+            if not url.startswith(('http://', 'https://')):
+                url = f'https://{url}'
             logging.info(f"Processing URL {idx}/{total}: {url}")
             processed = scrape_page(url)
             logging.info(f"Successfully processed {len(processed)} images from {url}")
