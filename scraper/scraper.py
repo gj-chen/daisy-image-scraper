@@ -103,19 +103,41 @@ class AsyncScraper:
                             logger.error(f"Failed processing image {image_url}: {str(e)}")
                             continue
 
-                    batch_records = []
-                    batch_urls = []
+                    inserted_images = []
                     for img in images:
-                        result = await process_single_image(img)
-                        if result:
-                            record, url = result
-                            batch_records.append(record)
-                            batch_urls.append(url)
+                        raw_src = img.get("src")
+                        if not raw_src:
+                            continue
 
-                    if batch_records:
-                        insert_metadata_to_supabase_sync(batch_records)
-                        inserted_images.extend(batch_urls)
-                        logger.info(f"Processed batch of {len(batch_records)} images")
+                        image_url = urljoin(url, raw_src)
+                        if image_url in self.existing_images:
+                            continue
+
+                        try:
+                            metadata = generate_gpt_structured_metadata_sync(context)
+                            if not metadata:
+                                continue
+
+                            embedding = generate_embedding_sync(metadata)
+                            if not embedding:
+                                continue
+
+                            stored_image_url = store_image(image_url)
+                            if stored_image_url:
+                                record = prepare_metadata_record(
+                                    image_url=image_url,
+                                    source_url=url,
+                                    title=context['title'],
+                                    description=context['alt_text'],
+                                    structured_metadata=metadata,
+                                    embedding=embedding,
+                                    stored_image_url=stored_image_url
+                                )
+                                insert_metadata_to_supabase_sync([record])
+                                inserted_images.append(image_url)
+                        except Exception as e:
+                            logger.error(f"Failed processing image {image_url}: {str(e)}")
+                            continue
 
                     return inserted_images
 
