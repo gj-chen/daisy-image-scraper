@@ -44,7 +44,7 @@ def scrape_page(url: str, max_retries: int = MAX_RETRIES) -> List[str]:
             break
         except requests.RequestException as e:
             if attempt == max_retries - 1:
-                raise
+                raise ScrapingError(f"Failed to scrape after {max_retries} attempts: {str(e)}")
             logger.warning(f"Retry {attempt + 1}/{max_retries} after error: {str(e)}")
             sleep(2 ** attempt)  # Exponential backoff
 
