@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from scraper.scraper import scrape_page
 import logging
+import requests
+import os
 
 logging.basicConfig(
     level=logging.INFO,
