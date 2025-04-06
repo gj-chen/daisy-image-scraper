@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from utils.openai_utils import generate_gpt_structured_metadata
-from utils.db_utils import insert_metadata_to_supabase, generate_embedding
+from utils.db_utils import insert_metadata_to_supabase, generate_embedding, prepare_metadata_record
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,11 +35,14 @@ class SheerLuxeScraper:
 
             embedding = generate_embedding(structured_metadata)
 
-            data_record = {
-                "image_url": image_url,
-                "metadata": structured_metadata,
-                "embedding": embedding
-            }
+            data_record = prepare_metadata_record(
+                image_url=image_url,
+                source_url=url,
+                title=context['title'],
+                description=context['alt_text'],
+                structured_metadata=structured_metadata,
+                embedding=embedding
+            )
 
             insert_metadata_to_supabase([data_record])
             logger.info(f"Inserted metadata incrementally for image: {image_url}")
