@@ -53,13 +53,7 @@ def main():
     clear_storage()
     num_workers = max(1, min(cpu_count() - 1, len(SCRAPER_SEED_URLS)))
     logging.info(f"Starting distributed scraping with {num_workers} workers")
-    # Ensure all URLs have https:// prefix
-    SEED_URLS = ['https://' + url if not url.startswith('http') else url for url in SCRAPER_SEED_URLS]
-    logging.info(f"Processing seed URLs: {SEED_URLS}")
-    
-    # Replace SCRAPER_SEED_URLS with properly formatted URLs
-    SCRAPER_SEED_URLS.clear()
-    SCRAPER_SEED_URLS.extend(SEED_URLS)
+    logging.info(f"Processing seed URLs: {SCRAPER_SEED_URLS}")
     
     try:
         if not SCRAPER_SEED_URLS:
