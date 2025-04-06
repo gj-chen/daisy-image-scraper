@@ -19,7 +19,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Run Scraper"
+runButton = "Distributed Scraper"
 
 [[workflows.workflow]]
 name = "Run Flask"
