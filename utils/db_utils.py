@@ -80,6 +80,6 @@ def prepare_metadata_record(image_url, source_url, title, description, structure
 def clear_database():
     """Clear all records from the database"""
     from utils.supabase_client import supabase
-    # Delete all records without a specific condition
-    supabase.table('moodboard_items').delete().execute()
+    # Delete all records by using a WHERE clause that matches everything
+    supabase.table('moodboard_items').delete().not_('id', 'eq', None).execute()
     logger.info("Cleared database")
