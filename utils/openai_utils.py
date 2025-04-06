@@ -1,7 +1,9 @@
 import json
+import logging
 from openai import OpenAI
-from config import OPENAI_API_KEY  # ensure your API key is correctly imported from config
+from config import OPENAI_API_KEY
 
+logging.basicConfig(level=logging.INFO)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 def generate_gpt_structured_metadata(scraped_content):
@@ -59,10 +61,20 @@ def generate_gpt_structured_metadata(scraped_content):
         temperature=0.0,
     )
 
-    structured_metadata = json.loads(response.choices[0].message.content)
+    raw_content = response.choices[0].message.content.strip()
+
+    # Explicit logging to debug response
+    logging.info(f"GPT Response: {raw_content}")
+
+    try:
+        structured_metadata = json.loads(raw_content)
+    except json.JSONDecodeError as e:
+        logging.error(f"JSON decoding error: {e}")
+        logging.error(f"Raw GPT response: {raw_content}")
+        raise Exception(f"Failed to parse JSON from GPT response: {e}")
+
     return structured_metadata
 
-# Corrected embedding function (also required syntax change)
 def get_embedding(text):
     response = client.embeddings.create(
         input=text,
