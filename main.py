@@ -25,6 +25,9 @@ def scrape():
             return jsonify({"error": "Invalid URL format"}), 400
 
         images = scrape_page(url)
+        if not images:
+            return jsonify({"error": "No images found"}), 404
+            
         return jsonify({"images": images, "inserted": len(images)}), 200
     except requests.RequestException as e:
         logging.error(f"Request failed: {str(e)}")
