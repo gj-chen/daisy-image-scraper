@@ -104,16 +104,16 @@ class AsyncScraper:
                                 continue
 
                             record = prepare_metadata_record(
-                                    image_url=image_url,
-                                    source_url=url,
-                                    title=context['title'],
-                                    description=context['alt_text'],
-                                    structured_metadata=metadata,
-                                    embedding=embedding,
-                                    stored_image_url=stored_image_url
-                                )
-                                insert_metadata_to_supabase_sync([record])
-                                inserted_images.append(image_url)
+                                image_url=image_url,
+                                source_url=url,
+                                title=context['title'],
+                                description=context['alt_text'],
+                                structured_metadata=metadata,
+                                embedding=embedding,
+                                stored_image_url=stored_image_url
+                            )
+                            insert_metadata_to_supabase_sync([record])
+                            inserted_images.append(image_url)
                         except Exception as e:
                             logger.error(f"Failed processing image {image_url}: {str(e)}")
                             continue
