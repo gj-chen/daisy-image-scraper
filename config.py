@@ -26,6 +26,8 @@ SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
 
 # Constants
 MAX_RETRIES = 3
-SCRAPER_CONCURRENCY_LIMIT = 5
+SCRAPER_CONCURRENCY_LIMIT = 10  # Increased concurrency
 SCRAPER_MAX_AGE_YEARS = 3
 SCRAPER_MAX_DEPTH = 3
+BATCH_SIZE = 50  # For batch DB operations
+URL_BATCH_SIZE = 100  # For URL frontier processing

@@ -120,6 +120,22 @@ class AsyncScraper:
         
         self.frontier.add_url(seed_url)
         all_processed_images = []
+        pending_tasks = []
+
+        async def process_url_batch():
+            urls_to_process = []
+            while self.frontier.has_urls and len(urls_to_process) < URL_BATCH_SIZE:
+                url, depth = self.frontier.get_next_url()
+                if url not in self.frontier.visited:
+                    urls_to_process.append((url, depth))
+            
+            if urls_to_process:
+                tasks = [self.process_url(url, depth) for url, depth in urls_to_process]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                for url, result in zip([u for u, _ in urls_to_process], results):
+                    if isinstance(result, list):
+                        all_processed_images.extend(result)
+                    self.frontier.mark_visited(url)
 
         try:
             while self.frontier.has_urls:
