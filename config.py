@@ -22,3 +22,6 @@ OPENAI_API_KEY = get_required_env("OPENAI_API_KEY")
 # Optional configs - can have defaults
 UPLOAD_ENDPOINT = get_optional_env("UPLOAD_ENDPOINT", "https://default-upload-endpoint.com")
 SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
+
+# Constants
+MAX_RETRIES = 3
