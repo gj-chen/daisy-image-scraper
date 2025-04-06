@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import logging
 from typing import Set, Optional
 import re
+from config import SCRAPER_MAX_DEPTH, SCRAPER_MAX_AGE_YEARS
 
 logger = logging.getLogger(__name__)
 
