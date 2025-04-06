@@ -8,10 +8,12 @@ logger = logging.getLogger(__name__)
 supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def insert_metadata_to_supabase_sync(metadata_list):
+def insert_metadata_to_supabase_sync(metadata_list, batch_size=50):
     try:
-        supabase_client.table('moodboard_items').insert(metadata_list).execute()
-        logger.info(f"Inserted {len(metadata_list)} records.")
+        for i in range(0, len(metadata_list), batch_size):
+            batch = metadata_list[i:i + batch_size]
+            supabase_client.table('moodboard_items').insert(batch).execute()
+            logger.info(f"Inserted batch of {len(batch)} records.")
     except Exception as e:
         logger.error(f"Supabase Error: {e}")
         raise

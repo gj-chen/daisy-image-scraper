@@ -7,16 +7,31 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def scrape_page(url):
+def scrape_page(url, max_retries=3):
     logger.info(f"Scraping URL: {url}")
-    resp = requests.get(url, timeout=30)
-    resp.raise_for_status()
+    
+    for attempt in range(max_retries):
+        try:
+            headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    resp = requests.get(url, timeout=30, headers=headers)
+            resp.raise_for_status()
+            break
+        except requests.RequestException as e:
+            if attempt == max_retries - 1:
+                raise
+            logger.warning(f"Retry {attempt + 1}/{max_retries} after error: {str(e)}")
+            sleep(2 ** attempt)  # Exponential backoff
 
     soup = BeautifulSoup(resp.text, "html.parser")
     images = soup.find_all("img")
     inserted_images = []
 
+    from time import sleep
+    
     for img in images:
+        sleep(1)  # Rate limiting
         raw_src = img.get("src")
         if not raw_src:
             logger.warning("Image without src skipped.")
