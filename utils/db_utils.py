@@ -79,7 +79,7 @@ def prepare_metadata_record(image_url, source_url, title, description, structure
     }
 def clear_database():
     """Clear all records from the database"""
-    from utils.supabase_client import get_supabase_client
+    from utils.supabase_client import supabase
     supabase = get_supabase_client()
     supabase.table('metadata').delete().execute()
     logger.info("Cleared database")
