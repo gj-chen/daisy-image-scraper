@@ -54,7 +54,7 @@ class AsyncScraper:
                     links = soup.find_all("a", href=True)
                     for link in links:
                         new_url = urljoin(url, link["href"])
-                        if ("sheerluxe.com" in new_url and 
+                        if ("sheerluxe.com/fashion" in new_url and 
                             new_url not in self.frontier.visited and
                             not new_url.endswith(('.jpg', '.jpeg', '.png', '.gif'))):
                             logger.info(f"Found new URL: {new_url}")
