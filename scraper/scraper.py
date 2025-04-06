@@ -178,7 +178,7 @@ class AsyncScraper:
                         if isinstance(result, list):
                             all_processed_images.extend(result)
                     
-                    await asyncio.sleep(1)  # Rate limiting between batches
+                    await asyncio.sleep(0.01)  # Rate limiting between batches (10ms)
 
         except asyncio.CancelledError:
             logger.info("Crawling cancelled")
