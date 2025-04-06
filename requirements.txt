@@ -1,7 +1,7 @@
 playwright
 beautifulsoup4
 requests
-openai
+openai>=1.0.0
 supabase
 python-dotenv
 gunicorn

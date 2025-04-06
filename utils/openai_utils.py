@@ -1,5 +1,8 @@
-import openai
 import json
+from openai import OpenAI
+from config import OPENAI_API_KEY  # ensure your API key is correctly imported from config
+
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 def generate_gpt_structured_metadata(scraped_content):
     prompt = f"""
@@ -50,7 +53,7 @@ def generate_gpt_structured_metadata(scraped_content):
     Fill out all fields accurately and briefly, based on provided content. Respond ONLY with the JSON object.
     """
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4-turbo",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0,
@@ -59,10 +62,10 @@ def generate_gpt_structured_metadata(scraped_content):
     structured_metadata = json.loads(response.choices[0].message.content)
     return structured_metadata
 
-# Your existing embedding function (unchanged)
+# Corrected embedding function (also required syntax change)
 def get_embedding(text):
-    response = openai.Embedding.create(
+    response = client.embeddings.create(
         input=text,
         model="text-embedding-ada-002"
     )
-    return response["data"][0]["embedding"]
+    return response.data[0].embedding
