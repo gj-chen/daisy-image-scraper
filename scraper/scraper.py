@@ -146,6 +146,9 @@ class AsyncScraper:
         self.frontier.add_url(seed_url)
         all_processed_images = []
         pending_tasks = []
+        processed_count = 0
+        
+        logger.info(f"Starting crawl from seed URL: {seed_url}")
 
         try:
             while True:  # Run continuously

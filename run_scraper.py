@@ -35,14 +35,20 @@ def chunk_urls(urls, num_chunks):
     return chunks
 
 def process_url_chunk(urls):
+    if not urls:
+        logging.warning("Empty URL chunk received")
+        return []
+        
     results = []
-    for url in urls:
+    total = len(urls)
+    for idx, url in enumerate(urls, 1):
         try:
+            logging.info(f"Processing URL {idx}/{total}: {url}")
             processed = scrape_page(url)
-            print(f"Processed {len(processed)} images from {url}")
+            logging.info(f"Successfully processed {len(processed)} images from {url}")
             results.extend(processed)
         except Exception as e:
-            print(f"Error processing {url}: {str(e)}")
+            logging.error(f"Error processing {url}: {str(e)}", exc_info=True)
     return results
 
 def main():
