@@ -55,8 +55,9 @@ class AsyncScraper:
                     for link in links:
                         new_url = urljoin(url, link["href"])
                         if ("sheerluxe.com" in new_url and 
-                            self.frontier.is_valid_date(new_url) and 
-                            new_url not in self.frontier.visited):
+                            new_url not in self.frontier.visited and
+                            not new_url.endswith(('.jpg', '.jpeg', '.png', '.gif'))):
+                            logger.info(f"Found new URL: {new_url}")
                             self.frontier.add_url(new_url, depth + 1)
 
                     # Process images
