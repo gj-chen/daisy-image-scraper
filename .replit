@@ -29,4 +29,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "gunicorn --workers 4 --timeout 180 --graceful-timeout 120 main:app"
+args = "gunicorn --workers 4 --timeout 180 --graceful-timeout 120 --bind 0.0.0.0:5000 main:app"
