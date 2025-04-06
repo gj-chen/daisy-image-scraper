@@ -1,6 +1,19 @@
-# scraper/scraper.py
+import subprocess
+import os
 from playwright.sync_api import sync_playwright
 from config import SHEERLUXE_COOKIE
+
+# Safe function to install Chromium if missing (works gracefully on Railway & Replit)
+def install_chromium():
+    chromium_path = os.path.expanduser("~/.cache/ms-playwright/chromium")
+    if not os.path.exists(chromium_path):
+        try:
+            subprocess.run(["playwright", "install", "chromium", "--with-deps"], check=True)
+        except Exception as e:
+            print(f"Could not install Chromium: {e}")
+
+# Call installation explicitly once at import time (safe and idempotent)
+install_chromium()
 
 class SheerLuxeScraper:
     def __init__(self):
@@ -20,7 +33,6 @@ class SheerLuxeScraper:
             page = context.new_page()
             page.goto(url)
 
-            # Scrape images and surrounding text context clearly
             images = page.query_selector_all('img')
             scraped_data = []
             for img in images:
