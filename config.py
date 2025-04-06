@@ -26,15 +26,15 @@ SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
 # Constants
 CLEAR_ON_RUN = True  # Clear storage and DB on new runs
 MAX_RETRIES = 3
-SCRAPER_CONCURRENCY_LIMIT = 400  # Increased for better throughput while maintaining rate limits
+SCRAPER_CONCURRENCY_LIMIT = 600  # Further increased for better throughput
 SCRAPER_MAX_AGE_YEARS = 6  # Keep 6 years as requested
 SCRAPER_MAX_DEPTH = 10  # Keep depth the same
-BATCH_SIZE = 10000  # Increased for better DB performance
-URL_BATCH_SIZE = 10000  # Increased for better throughput
-IMAGE_BATCH_SIZE = 500  # Increased for better parallel processing
-# Rate limiting
-OPENAI_RATE_LIMIT = 50  # Requests per minute per worker
-STORAGE_RATE_LIMIT = 30  # Uploads per minute per worker
+BATCH_SIZE = 20000  # Doubled for better DB performance
+URL_BATCH_SIZE = 20000  # Doubled for better throughput
+IMAGE_BATCH_SIZE = 1000  # Doubled for better parallel processing
+# Rate limiting - increased but staying within safe limits
+OPENAI_RATE_LIMIT = 80  # Increased requests per minute per worker
+STORAGE_RATE_LIMIT = 50  # Increased uploads per minute per worker
 SCRAPER_RATE_LIMIT = 20  # Requests per minute per worker
 
 # Get seed URLs from environment variable, fallback to default if not set
