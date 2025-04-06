@@ -3,6 +3,7 @@ from openai import OpenAI
 import os, logging
 from datetime import datetime
 import json
+from config import BATCH_SIZE
 
 logger = logging.getLogger(__name__)
 
