@@ -11,7 +11,7 @@ language = "python3"
 requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
-run = ["sh", "-c", "python run_scraper.py"]
+run = ["sh", "-c", "gunicorn --workers 4 --timeout 180 --graceful-timeout 120 --bind 0.0.0.0:5000 main:app & python run_scraper.py & python monitor.py"]
 deploymentTarget = "cloudrun"
 
 [[ports]]
