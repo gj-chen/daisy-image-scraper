@@ -21,10 +21,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-def process_url(url):
+def process_url(url, worker_id=None):
     try:
-        processed_images = scrape_page(url)
-        print(f"Successfully processed {len(processed_images)} images from {url}")
+        processed_images = scrape_page(url, worker_id)
+        print(f"Worker {worker_id}: Successfully processed {len(processed_images)} images from {url}")
         return processed_images
     except Exception as e:
         print(f"Error processing {url}: {str(e)}")

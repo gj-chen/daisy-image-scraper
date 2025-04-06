@@ -221,12 +221,15 @@ class AsyncScraper:
                 logger.error(f"Error processing URL {url}: {str(e)}")
                 return []
 
-    async def crawl(self, seed_url: str) -> List[str]:
+    async def crawl(self, seed_url: str, worker_id: int = None) -> List[str]:
         await self.init_session()
         self.frontier.add_url(seed_url)
         all_processed_images = []
         pending_tasks = []
         processed_count = 0
+        
+        worker_info = f"Worker {worker_id}: " if worker_id is not None else ""
+        logger.info(f"{worker_info}Starting crawl from seed URL: {seed_url}")
 
         logger.info(f"Starting crawl from seed URL: {seed_url}")
 
