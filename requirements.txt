@@ -7,3 +7,9 @@ python-dotenv
 gunicorn
 flask
 httpx
+twilio
+werkzeug
+twilio
+werkzeug
+twilio
+werkzeug
