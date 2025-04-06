@@ -42,4 +42,8 @@ FASHION_SUBCATEGORIES = [
 ]
 
 DEFAULT_SEEDS = [f"https://sheerluxe.com/fashion/{cat}" for cat in FASHION_SUBCATEGORIES]
-SCRAPER_SEED_URLS = get_optional_env("SCRAPER_SEED_URLS", ",".join(DEFAULT_SEEDS)).split(",")
+# Ensure all seed URLs have https:// prefix and proper domain
+SCRAPER_SEED_URLS = [
+    url if url.startswith('http') else f'https://{url}'
+    for url in get_optional_env("SCRAPER_SEED_URLS", ",".join(DEFAULT_SEEDS)).split(",")
+]
