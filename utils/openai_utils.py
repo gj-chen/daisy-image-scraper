@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def generate_gpt_structured_metadata_sync(image_context, retries=3, timeout=20):
+def generate_gpt_structured_metadata_sync(image_context, retries=3, timeout=60):
     prompt = build_prompt(image_context)
 
     for attempt in range(1, retries + 1):
@@ -16,15 +16,23 @@ def generate_gpt_structured_metadata_sync(image_context, retries=3, timeout=20):
                 model="gpt-4-turbo",
                 response_format={"type": "json_object"},
                 messages=[{"role": "system", "content": prompt}],
-                timeout=timeout
+                timeout=timeout,
+                request_timeout=timeout
             )
             structured_metadata = response.choices[0].message.content
             logger.info(f"GPT metadata success for: {image_context['image_url']}")
             return json.loads(structured_metadata)
+        except (openai.APITimeoutError, openai.APIConnectionError) as e:
+            logger.warning(f"Temporary error (attempt {attempt}/{retries}): {str(e)}")
+            if attempt < retries:
+                import time
+                time.sleep(attempt * 2)  # Exponential backoff
+                continue
         except Exception as e:
-            logger.error(f"GPT metadata error (attempt {attempt}/{retries}): {e}")
-            if attempt == retries:
-                logger.error(f"All retries failed for image: {image_context['image_url']}")
+            logger.error(f"GPT metadata error: {str(e)}")
+            break
+    
+    logger.error(f"All attempts failed for image: {image_context['image_url']}")
     return None
 
 def generate_embedding_sync(metadata):

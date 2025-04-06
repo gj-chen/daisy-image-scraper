@@ -30,9 +30,13 @@ def scrape_page(url):
             "surrounding_text": img.parent.get_text(strip=True) if img.parent else ""
         }
 
-        metadata = generate_gpt_structured_metadata_sync(context)
-        if not metadata:
-            logger.error(f"GPT metadata generation failed for {image_url}")
+        try:
+            metadata = generate_gpt_structured_metadata_sync(context)
+            if not metadata:
+                logger.error(f"GPT metadata generation failed for {image_url}")
+                continue
+        except Exception as e:
+            logger.error(f"Failed to generate metadata for {image_url}: {str(e)}")
             continue
 
         embedding = generate_embedding_sync(metadata)
