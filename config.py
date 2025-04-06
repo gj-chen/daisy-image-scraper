@@ -26,10 +26,11 @@ SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
 
 # Constants
 MAX_RETRIES = 3
-SCRAPER_CONCURRENCY_LIMIT = 10  # Increased concurrency
+SCRAPER_CONCURRENCY_LIMIT = 20  # Double concurrency
 SCRAPER_MAX_AGE_YEARS = 3
 SCRAPER_MAX_DEPTH = 3
-BATCH_SIZE = 50  # For batch DB operations
-URL_BATCH_SIZE = 100  # For URL frontier processing
+BATCH_SIZE = 100  # Double batch size 
+URL_BATCH_SIZE = 200  # Double URL batch size
+IMAGE_BATCH_SIZE = 10  # Process images in batches
 # Get seed URLs from environment variable, fallback to default if not set
 SCRAPER_SEED_URLS = get_optional_env("SCRAPER_SEED_URLS", "https://sheerluxe.com").split(",")

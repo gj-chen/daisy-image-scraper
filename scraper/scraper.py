@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timedelta
 import re
 from .url_frontier import URLFrontier
-from config import SCRAPER_CONCURRENCY_LIMIT, SCRAPER_SEED_URLS
+from config import SCRAPER_CONCURRENCY_LIMIT, SCRAPER_SEED_URLS, URL_BATCH_SIZE
 from utils.openai_utils import generate_gpt_structured_metadata_sync
 from utils.db_utils import generate_embedding_sync, insert_metadata_to_supabase_sync, prepare_metadata_record
 
@@ -39,7 +39,7 @@ class AsyncScraper:
                 # Ensure URL has proper protocol
                 if not url.startswith(('http://', 'https://')):
                     url = f'https://{url}'
-                
+
                 async with self.session.get(url, timeout=30) as response:
                     if response.status == 403 or response.status == 401:
                         logger.error(f"Authentication required for {url}. Please check your SHEERLUXE_COOKIE environment variable.")
@@ -60,19 +60,19 @@ class AsyncScraper:
                             logger.info(f"Found new URL: {new_url}")
                             self.frontier.add_url(new_url, depth + 1)
 
-                    # Process images
+                    # Process images in batches
                     images = soup.find_all("img")
                     inserted_images = []
+                    image_batch = []
 
                     for img in images:
                         raw_src = img.get("src")
-                        if not raw_src:
+                        if not raw_src or not raw_src.startswith(('http://', 'https://')):
                             continue
 
                         image_url = urljoin(url, raw_src)
                         if image_url in self.existing_images:
                             continue
-
 
                         context = {
                             "image_url": image_url,
@@ -82,14 +82,6 @@ class AsyncScraper:
                         }
 
                         try:
-                            metadata = generate_gpt_structured_metadata_sync(context)
-                            if not metadata:
-                                continue
-
-                            embedding = generate_embedding_sync(metadata)
-                            if not embedding:
-                                continue
-
                             metadata = generate_gpt_structured_metadata_sync(context)
                             if not metadata:
                                 continue
@@ -130,21 +122,6 @@ class AsyncScraper:
         all_processed_images = []
         pending_tasks = []
 
-        async def process_url_batch():
-            urls_to_process = []
-            while self.frontier.has_urls and len(urls_to_process) < URL_BATCH_SIZE:
-                url, depth = self.frontier.get_next_url()
-                if url not in self.frontier.visited:
-                    urls_to_process.append((url, depth))
-
-            if urls_to_process:
-                tasks = [self.process_url(url, depth) for url, depth in urls_to_process]
-                results = await asyncio.gather(*tasks, return_exceptions=True)
-                for url, result in zip([u for u, _ in urls_to_process], results):
-                    if isinstance(result, list):
-                        all_processed_images.extend(result)
-                    self.frontier.mark_visited(url)
-
         try:
             while True:  # Run continuously
                 if not self.frontier.has_urls:
@@ -169,20 +146,20 @@ class AsyncScraper:
                 # Process batch
                 tasks = [self.process_url(url, depth) for url, depth in current_batch]
                 results = await asyncio.gather(*tasks, return_exceptions=True)
-                
+
                 # Mark URLs as visited only after processing
                 for (url, _), result in zip(current_batch, results):
                     if isinstance(result, list):
                         all_processed_images.extend(result)
                     self.frontier.mark_visited(url)
                     logger.info(f"Completed processing URL: {url}")
-                
+
                 if tasks:
                     results = await asyncio.gather(*tasks, return_exceptions=True)
                     for result in results:
                         if isinstance(result, list):
                             all_processed_images.extend(result)
-                    
+
                     await asyncio.sleep(0.01)  # Rate limiting between batches (10ms)
 
         except asyncio.CancelledError:
