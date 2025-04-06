@@ -1,4 +1,4 @@
-from openai import OpenAI
+from openai import OpenAI, APITimeoutError, APIConnectionError
 import json
 import logging
 import os
@@ -22,7 +22,7 @@ def generate_gpt_structured_metadata_sync(image_context, retries=3, timeout=60):
             structured_metadata = response.choices[0].message.content
             logger.info(f"GPT metadata success for: {image_context['image_url']}")
             return json.loads(structured_metadata)
-        except (openai.APITimeoutError, openai.APIConnectionError) as e:
+        except (APITimeoutError, APIConnectionError) as e:
             logger.warning(f"Temporary error (attempt {attempt}/{retries}): {str(e)}")
             if attempt < retries:
                 import time
