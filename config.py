@@ -26,7 +26,7 @@ SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
 # Constants
 CLEAR_ON_RUN = True  # Clear storage and DB on new runs
 MAX_RETRIES = 3
-SCRAPER_CONCURRENCY_LIMIT = 200  # Reduced to avoid rate limits
+SCRAPER_CONCURRENCY_LIMIT = 400  # Increased for better throughput while maintaining rate limits
 SCRAPER_MAX_AGE_YEARS = 6  # Keep 6 years as requested
 SCRAPER_MAX_DEPTH = 10  # Keep depth the same
 BATCH_SIZE = 5000  # Reduced batch size

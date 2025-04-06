@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def insert_metadata_to_supabase_sync(metadata_list, batch_size=100):  # Reduced from 5000 to 100
+def insert_metadata_to_supabase_sync(metadata_list, batch_size=5000):
     try:
         # Pre-process and deduplicate records
         seen_urls = set()
