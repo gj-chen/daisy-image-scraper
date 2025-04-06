@@ -65,11 +65,24 @@ def get_existing_urls_and_images():
         logger.error(f"Failed to fetch existing URLs and images: {e}")
         return set(), set()
 
+def content_hash(metadata: dict) -> str:
+    """Create a simple hash of metadata content to detect duplicates"""
+    content = ''.join(str(v) for v in metadata.values() if v)
+    return str(hash(content))
+
 def prepare_metadata_record(image_url, source_url, title, description, structured_metadata, embedding, stored_image_url=None):
+    # Check for existing similar content
+    content_signature = content_hash(structured_metadata)
+    existing = supabase_client.table('moodboard_items').select('id').eq('content_hash', content_signature).limit(1).execute()
+    if existing.data:
+        logger.info(f"Skipping duplicate content for {image_url}")
+        return None
+        
     return {
         "image_url": image_url,
         "stored_image_url": stored_image_url,
         "source_url": source_url,
+        "content_hash": content_signature,
         "title": title,
         "description": description,
         "metadata": structured_metadata,
