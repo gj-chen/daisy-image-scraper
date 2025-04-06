@@ -15,7 +15,9 @@ class URLFrontier:
         self.max_age_years = max_age_years
 
     def add_url(self, url: str, depth: int = 0):
-        if depth <= self.max_depth:
+        if not url.startswith(('http://', 'https://')):
+            url = f'https://{url}'
+        if depth <= self.max_depth and url not in self.visited:
             self.queue.append((url, depth))
 
     def get_next_url(self) -> Optional[tuple[str, int]]:

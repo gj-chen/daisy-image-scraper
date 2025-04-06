@@ -36,6 +36,10 @@ class AsyncScraper:
     async def process_url(self, url: str, depth: int) -> List[str]:
         async with self.sem:
             try:
+                # Ensure URL has proper protocol
+                if not url.startswith(('http://', 'https://')):
+                    url = f'https://{url}'
+                
                 async with self.session.get(url, timeout=30) as response:
                     if response.status == 403 or response.status == 401:
                         logger.error(f"Authentication required for {url}. Please check your SHEERLUXE_COOKIE environment variable.")
