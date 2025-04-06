@@ -49,7 +49,28 @@ Your analysis should be precise, insightful, nuanced, and stylistically authorit
 
 class MetadataGenerator:
     @staticmethod
+    def has_text_overlay(image_url):
+        response = openai.chat.completions.create(
+            model="gpt-4-vision-preview",
+            messages=[{
+                "role": "user", 
+                "content": [
+                    {"type": "text", "text": "Does this image have any text overlaid on it? Answer only 'yes' or 'no'."},
+                    {"type": "image_url", "image_url": {"url": image_url}}
+                ]
+            }],
+            max_tokens=10,
+            temperature=0
+        )
+        return 'yes' in response.choices[0].message.content.lower()
+
+    @staticmethod
     def generate(image_url, context_text):
+        # First check for text overlay
+        if MetadataGenerator.has_text_overlay(image_url):
+            logger.info(f"Skipping image with text overlay: {image_url}")
+            return None
+            
         response = openai.chat.completions.create(
             model="gpt-4-vision-preview",
             messages=[{
