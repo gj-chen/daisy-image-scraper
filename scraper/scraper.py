@@ -203,6 +203,13 @@ class AsyncScraper:
 
 def scrape_page(url: str) -> List[str]:
     scraper = AsyncScraper()
-    for seed_url in SCRAPER_SEED_URLS:  # Add all seed URLs from config
-        scraper.frontier.add_url(seed_url, depth=0)
-    return asyncio.run(scraper.crawl(url))
+    # Add the main URL and ensure it's properly formatted
+    main_url = url if url.startswith(('http://', 'https://')) else f'https://{url}'
+    scraper.frontier.add_url(main_url, depth=0)
+    
+    # Add fashion subcategory URLs
+    for subcat in FASHION_SUBCATEGORIES:
+        subcat_url = f"https://sheerluxe.com/fashion/{subcat}"
+        scraper.frontier.add_url(subcat_url, depth=0)
+    
+    return asyncio.run(scraper.crawl(main_url))

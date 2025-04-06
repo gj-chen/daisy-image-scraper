@@ -23,15 +23,19 @@ def process_url(url):
         return []
 
 def chunk_urls(urls, num_chunks):
-    """Split URLs into roughly equal chunks"""
-    avg = len(urls) // num_chunks
-    remainder = len(urls) % num_chunks
-    chunks = []
-    start = 0
-    for i in range(num_chunks):
-        end = start + avg + (1 if i < remainder else 0)
-        chunks.append(urls[start:end])
-        start = end
+    """Split URLs into roughly equal chunks, ensuring proper URL formatting"""
+    formatted_urls = [
+        url if url.startswith(('http://', 'https://')) else f'https://{url}'
+        for url in urls
+    ]
+    if not formatted_urls:
+        return [[]]
+    avg = max(1, len(formatted_urls) // num_chunks)
+    chunks = [formatted_urls[i:i + avg] for i in range(0, len(formatted_urls), avg)]
+    # Ensure we don't have more chunks than workers
+    while len(chunks) > num_chunks:
+        chunks[-2].extend(chunks[-1])
+        chunks.pop()
     return chunks
 
 def process_url_chunk(urls):
