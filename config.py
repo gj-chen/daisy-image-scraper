@@ -25,12 +25,12 @@ SHEERLUXE_COOKIE = get_optional_env("SHEERLUXE_COOKIE", "")
 
 # Constants
 MAX_RETRIES = 3
-SCRAPER_CONCURRENCY_LIMIT = 30  # Increased concurrency
+SCRAPER_CONCURRENCY_LIMIT = 50  # Higher concurrency for more parallel processing
 SCRAPER_MAX_AGE_YEARS = 3
 SCRAPER_MAX_DEPTH = 3
-BATCH_SIZE = 200  # Increased batch size
-URL_BATCH_SIZE = 300  # Increased URL batch size
-IMAGE_BATCH_SIZE = 5  # Smaller image batches for faster processing
+BATCH_SIZE = 500  # Larger batch size for DB operations
+URL_BATCH_SIZE = 500  # Process more URLs at once
+IMAGE_BATCH_SIZE = 10  # Double image batch size while keeping OpenAI rate limits in mind
 # Get seed URLs from environment variable, fallback to default if not set
 # Multiple entry points for parallel processing
 FASHION_SUBCATEGORIES = [
