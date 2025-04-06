@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 from scraper.scraper import scrape_page
-import asyncio
+import logging
 
+logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 
 @app.route('/')
@@ -19,8 +20,15 @@ def scrape():
 
     try:
         inserted_images = scrape_page(url)
-        logging.info(f"Inserted {len(inserted_images)} images successfully.")
-        return jsonify({"inserted": len(inserted_images)}), 200
+        count = len(inserted_images)
+        logging.info(f"Inserted {count} images successfully.")
+        return jsonify({
+            "inserted": count,
+            "images": inserted_images
+        }), 200
     except Exception as e:
         logging.error(f"Critical scraping error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=5000)
