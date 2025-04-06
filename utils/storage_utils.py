@@ -63,7 +63,7 @@ def store_image(image_url: str, existing_images=None) -> str:
         filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
         
         # Upload to Supabase Storage with upsert option
-        result = supabase.storage.from_('sheerluxe-images').upload(
+        result = supabase_client.storage.from_('sheerluxe-images').upload(
             filename,
             response.content,
             file_options={
@@ -72,7 +72,7 @@ def store_image(image_url: str, existing_images=None) -> str:
         )
         
         # Get public URL
-        public_url = supabase.storage.from_('sheerluxe-images').get_public_url(filename)
+        public_url = supabase_client.storage.from_('sheerluxe-images').get_public_url(filename)
         logger.info(f"Stored image: {filename}")
         return public_url
     except Exception as e:
