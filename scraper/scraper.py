@@ -62,10 +62,7 @@ class AsyncScraper:
                             continue
 
                         image_url = urljoin(url, raw_src)
-                        if image_url in self.frontier.processed_images:
-                            logger.info(f"Skipping already processed image: {image_url}")
-                            continue
-                        self.frontier.processed_images.add(image_url)
+                        
                             
                         context = {
                             "image_url": image_url,
