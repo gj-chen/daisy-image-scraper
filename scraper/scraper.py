@@ -77,10 +77,11 @@ class AsyncScraper:
                     for link in links:
                         new_url = urljoin(url, link["href"])
                         if ("sheerluxe.com/fashion" in new_url and 
-                            new_url not in self.frontier.visited and
                             not new_url.endswith(('.jpg', '.jpeg', '.png', '.gif'))):
-                            logger.info(f"Found new URL: {new_url}")
-                            self.frontier.add_url(new_url, depth + 1)
+                            # Only attempt to add if not already visited
+                            if new_url not in self.frontier.visited:
+                                self.frontier.add_url(new_url, depth + 1)
+                                logger.info(f"Added new URL to queue: {new_url}")
 
                     # Process images in larger batches
                     images = soup.find_all("img")
