@@ -30,11 +30,11 @@ class AsyncScraper:
             from utils.auth_utils import AuthSession
             auth = AuthSession()
             self.session = await auth.create_session()
-            
+
     async def process_single_image(self, img, image_url: str, source_url: str, context: dict):
         if image_url in self.existing_images:
             return None
-            
+
         try:
             metadata = generate_gpt_structured_metadata_sync(context)
             if not metadata:
@@ -69,7 +69,7 @@ class AsyncScraper:
     async def process_url(self, url: str, depth: int) -> List[str]:
         if url in self.frontier.visited or url in self.frontier.pending:
             return []
-            
+
         self.frontier.pending.add(url)
         async with self.sem:
             try:
@@ -135,7 +135,7 @@ class AsyncScraper:
 
                     for i in range(0, len(valid_images), batch_size):
                         batch = valid_images[i:i + batch_size]
-                        
+
                         # Create contexts for each image in batch
                         batch_contexts = []
                         for img, image_url in batch:
@@ -146,63 +146,63 @@ class AsyncScraper:
                                 "surrounding_text": img.parent.get_text(strip=True) if img.parent else ""
                             }
                             batch_contexts.append(context)
-                            
+
                         # Process batch with contexts
                         results = []
                         for j, (img, image_url) in enumerate(batch):
                             if image_url in self.existing_images:
                                 continue
-                                
-                            result = await self.process_single_image(img, image_url, url, batch_contexts[j])
-                            if result:  # Only append if metadata was generated successfully
-                                results.append(result)
-                                
-                        # Process valid results
-                        for result in results:
 
-                                metadata = generate_gpt_structured_metadata_sync(context)
-                                if not metadata:
-                                    logger.info(f"Skipping image {image_url} - empty metadata")
-                                    continue
+                            try:
+                                result = await self.process_single_image(img, image_url, url, batch_contexts[j])
+                                if result:  # Only append if metadata was generated successfully
+                                    results.append(result)
 
-                                # Recursive function to check if nested dict has any non-empty values
-                                def has_content(d):
-                                    if isinstance(d, dict):
-                                        return any(has_content(v) for v in d.values())
-                                    elif isinstance(d, list):
-                                        return len(d) > 0
-                                    elif isinstance(d, str):
-                                        return bool(d.strip())
-                                    return False
+                                # Process valid results
+                                for result in results:
+                                    metadata = generate_gpt_structured_metadata_sync(result['context'])
+                                    if not metadata:
+                                        logger.info(f"Skipping image {image_url} - empty metadata")
+                                        continue
 
-                                if not has_content(metadata):
-                                    logger.info(f"Skipping image {image_url} - empty metadata content")
-                                    continue
+                                    # Recursive function to check if nested dict has any non-empty values
+                                    def has_content(d):
+                                        if isinstance(d, dict):
+                                            return any(has_content(v) for v in d.values())
+                                        elif isinstance(d, list):
+                                            return len(d) > 0
+                                        elif isinstance(d, str):
+                                            return bool(d.strip())
+                                        return False
 
-                                embedding = generate_embedding_sync(metadata)
-                                if not embedding:
-                                    continue
+                                    if not has_content(metadata):
+                                        logger.info(f"Skipping image {image_url} - empty metadata content")
+                                        continue
 
-                                from utils.storage_utils import store_image
-                                stored_image_url = store_image(image_url, self.existing_images)
-                                if not stored_image_url:
-                                    continue
+                                    embedding = generate_embedding_sync(metadata)
+                                    if not embedding:
+                                        continue
 
-                                record = prepare_metadata_record(
-                                    image_url=image_url,
-                                    source_url=url,
-                                    title=context['title'],
-                                    description=context['alt_text'],
-                                    structured_metadata=metadata,
-                                    embedding=embedding,
-                                    stored_image_url=stored_image_url
-                                )
-                                batch_records.append(record)
-                                inserted_images.append(image_url)
+                                    from utils.storage_utils import store_image
+                                    stored_image_url = store_image(image_url, self.existing_images)
+                                    if not stored_image_url:
+                                        continue
 
-                                if len(batch_records) >= batch_size:
-                                    insert_metadata_to_supabase_sync(batch_records)
-                                    batch_records = []
+                                    record = prepare_metadata_record(
+                                        image_url=image_url,
+                                        source_url=url,
+                                        title=result['context']['title'],
+                                        description=result['context']['alt_text'],
+                                        structured_metadata=metadata,
+                                        embedding=embedding,
+                                        stored_image_url=stored_image_url
+                                    )
+                                    batch_records.append(record)
+                                    inserted_images.append(image_url)
+
+                                    if len(batch_records) >= batch_size:
+                                        insert_metadata_to_supabase_sync(batch_records)
+                                        batch_records = []
 
                             except Exception as e:
                                 logger.error(f"Failed processing image {image_url}: {str(e)}")
