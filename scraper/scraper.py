@@ -88,6 +88,17 @@ class AsyncScraper:
 
                                 metadata = generate_gpt_structured_metadata_sync(context)
                                 if not metadata:
+                                    logger.info(f"Skipping image {image_url} - empty metadata")
+                                    continue
+
+                                # Check if metadata contains any meaningful data
+                                has_content = any(
+                                    value for value in metadata.values() 
+                                    if value and (isinstance(value, str) and value.strip() or 
+                                                isinstance(value, (list, dict)) and value)
+                                )
+                                if not has_content:
+                                    logger.info(f"Skipping image {image_url} - empty metadata content")
                                     continue
 
                                 embedding = generate_embedding_sync(metadata)
