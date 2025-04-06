@@ -29,3 +29,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "gunicorn --workers 4 --timeout 180 --graceful-timeout 120 --bind 0.0.0.0:5000 main:app"
+
+[[workflows.workflow]]
+name = "Run Scraper"
+author = 28026932
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_scraper.py"
