@@ -12,18 +12,36 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def insert_metadata_to_supabase_sync(metadata_list, batch_size=BATCH_SIZE):
     try:
-        # Pre-process records to minimize payload
-        processed_records = [{k: v for k, v in record.items() if v is not None} 
-                           for record in metadata_list]
+        # Pre-process and deduplicate records
+        seen_urls = set()
+        processed_records = []
         
+        for record in metadata_list:
+            if record['image_url'] not in seen_urls:
+                seen_urls.add(record['image_url'])
+                # Remove None values and empty strings
+                cleaned_record = {k: v for k, v in record.items() 
+                                if v is not None and v != ""}
+                processed_records.append(cleaned_record)
+        
+        if not processed_records:
+            return
+            
+        # Split into optimal sized batches
         batches = [processed_records[i:i + batch_size] 
                   for i in range(0, len(processed_records), batch_size)]
-                  
+        
+        # Use upsert to handle duplicates gracefully
         for batch in batches:
-            supabase_client.table('moodboard_items').insert(batch).execute()
-            logger.info(f"Inserted batch of {len(batch)} records.")
+            supabase_client.table('moodboard_items')\
+                .upsert(batch, on_conflict='image_url')\
+                .execute()
+            logger.info(f"Upserted batch of {len(batch)} records")
+            
     except Exception as e:
         logger.error(f"Supabase Error: {e}")
+        # Log failed batch for retry
+        logger.error(f"Failed batch size: {len(metadata_list)}")
         raise
 
 def generate_embedding_sync(metadata):
