@@ -111,13 +111,6 @@ class AsyncScraper:
 
     async def crawl(self, seed_url: str) -> List[str]:
         await self.init_session()
-        
-        # Pre-load existing URLs and images from DB
-        from utils.db_utils import get_existing_urls_and_images
-        existing_urls, existing_images = get_existing_urls_and_images()
-        self.frontier.visited.update(existing_urls)
-        self.frontier.processed_images.update(existing_images)
-        
         self.frontier.add_url(seed_url)
         all_processed_images = []
         pending_tasks = []

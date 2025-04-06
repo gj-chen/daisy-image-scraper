@@ -5,7 +5,6 @@ import logging
 from typing import Set, Optional
 import re
 from config import SCRAPER_MAX_DEPTH, SCRAPER_MAX_AGE_YEARS
-from utils.db_utils import check_url_exists, check_image_exists
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ class URLFrontier:
         self.processed_images = set()
         
     def add_url(self, url: str, depth: int = 0):
-        if url not in self.visited and depth <= self.max_depth:
+        if depth <= self.max_depth:
             self.queue.append((url, depth))
             
     def get_next_url(self) -> Optional[tuple[str, int]]:
@@ -28,7 +27,6 @@ class URLFrontier:
         self.visited.add(url)
         
     def is_valid_date(self, url: str) -> bool:
-        # Extract date from URL pattern like /2025/04/
         date_match = re.search(r'/(\d{4})/(\d{2})/', url)
         if not date_match:
             return False
