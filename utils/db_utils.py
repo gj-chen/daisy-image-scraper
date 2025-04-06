@@ -32,15 +32,15 @@ def insert_metadata_to_supabase_sync(metadata_list, batch_size=100):  # Reduced 
         batches = [processed_records[i:i + batch_size] 
                   for i in range(0, len(processed_records), batch_size)]
         
-        # Use upsert with error handling per batch
+        # Use regular insert with error handling per batch
         for batch in batches:
             try:
                 supabase_client.table('moodboard_items')\
-                    .upsert(batch, on_conflict='image_url')\
+                    .insert(batch)\
                     .execute()
-                logger.info(f"Upserted batch of {len(batch)} records")
+                logger.info(f"Inserted batch of {len(batch)} records")
             except Exception as e:
-                logger.error(f"Failed to upsert batch: {str(e)}")
+                logger.error(f"Failed to insert batch: {str(e)}")
                 failed_records.extend(batch)
                 continue
                 
@@ -48,7 +48,7 @@ def insert_metadata_to_supabase_sync(metadata_list, batch_size=100):  # Reduced 
         for record in failed_records:
             try:
                 supabase_client.table('moodboard_items')\
-                    .upsert([record], on_conflict='image_url')\
+                    .insert([record])\
                     .execute()
                 logger.info("Recovered failed record")
             except Exception as e:
