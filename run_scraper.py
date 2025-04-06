@@ -79,8 +79,17 @@ def main():
     scrape_data = {"last_scrape_date": current_date}
     with open(LAST_SCRAPE_FILE, 'w') as f:
         json.dump(scrape_data, f)
-        
+
+    from scraper.task_coordinator import TaskCoordinator
+    coordinator = TaskCoordinator(chunk_size=20)
+    
+    # Initialize with seed URLs
+    coordinator.add_urls(SCRAPER_SEED_URLS)
+    
+    # Calculate optimal number of workers based on CPU cores
     num_workers = max(1, cpu_count() - 1)
+    chunk_size = len(SCRAPER_SEED_URLS) // num_workers + 1
+    
     print(f"Starting distributed scraping with {num_workers} workers")
     
     try:

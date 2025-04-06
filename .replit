@@ -47,3 +47,24 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python monitor.py"
+
+[[workflows.workflow]]
+name = "Distributed Scraper"
+author = 28026932
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_scraper.py --worker-id=1 --total-workers=4"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_scraper.py --worker-id=2 --total-workers=4"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_scraper.py --worker-id=3 --total-workers=4"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_scraper.py --worker-id=4 --total-workers=4"
