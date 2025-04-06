@@ -5,6 +5,7 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
+import config
 
 from utils.storage_utils import clear_storage
 
