@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from scraper.scraper import scrape_page
+from scraper.scraper import SheerLuxeScraper
 from utils.supabase_client import supabase
 import logging
 import os
@@ -7,6 +7,10 @@ import os
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Hello Daisy Scraper"
 
 @app.route('/scrape', methods=['POST'])
 def scrape():
@@ -19,21 +23,31 @@ def scrape():
     logging.info(f"Scraping URL: {url}")
 
     try:
-        images, metadata = scrape_page(url)
+        # Instantiate the scraper and scrape the provided URL
+        scraper = SheerLuxeScraper()
+        scraped_data = scraper.scrape_page(url)
 
-        # Assuming scrape_page returns metadata structured as:
-        # {"title": "title", "description": "...", "embedding": [float...]}
-        embedding = metadata.pop("embedding", None)
+        images = [item['image_url'] for item in scraped_data]
 
-        # Insert each scraped image as a moodboard item into Supabase
-        for img_url in images:
+        # Example metadata construction—customize as needed
+        metadata = {
+            "title": f"Scraped content from {url}",
+            "description": f"{len(images)} images scraped from the page.",
+            "embedding": None  # Replace if embeddings are calculated elsewhere
+        }
+
+        # Insert each scraped image into Supabase
+        for item in scraped_data:
+            img_url = item['image_url']
+            context_text = item.get('context', 'No context provided.')
+
             response = supabase.table('moodboard_items').insert({
                 'image_url': img_url,
                 'source_url': url,
-                'title': metadata.get('title', 'No Title'),
-                'description': metadata.get('description', 'No Description'),
+                'title': metadata['title'],
+                'description': context_text,
                 'metadata': metadata,
-                'embedding': embedding
+                'embedding': metadata['embedding']
             }).execute()
 
             if response.data:
@@ -52,4 +66,4 @@ def scrape():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.getenv("PORT", 8080)))
+    app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)))

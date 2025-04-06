@@ -9,3 +9,5 @@ playwright
 python-dotenv
 requests
 supabase
+gunicorn
+flask
