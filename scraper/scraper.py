@@ -15,7 +15,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 logger = logging.getLogger(__name__)
 
 from typing import List, Optional
-from config import MAX_RETRIES
+from config import MAX_RETRIES, SHEERLUXE_COOKIE
 from .exceptions import ScrapingError
 
 def scrape_page(url: str, max_retries: int = MAX_RETRIES) -> List[str]:
