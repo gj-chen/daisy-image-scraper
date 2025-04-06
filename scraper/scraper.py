@@ -106,6 +106,7 @@ class AsyncScraper:
                         batch = valid_images[i:i + batch_size]
                         results = await process_image_batch(batch)
 
+                        for result in results:
                             try:
                                 context = {
                                     "image_url": image_url,
