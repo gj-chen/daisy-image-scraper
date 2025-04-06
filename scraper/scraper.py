@@ -30,6 +30,37 @@ class AsyncScraper:
             from utils.auth_utils import AuthSession
             auth = AuthSession()
             self.session = await auth.create_session()
+            
+    async def process_single_image(self, img, image_url: str, source_url: str, context: dict):
+        if image_url in self.existing_images:
+            return None
+            
+        try:
+            metadata = generate_gpt_structured_metadata_sync(context)
+            if not metadata:
+                logger.info(f"Skipping image {image_url} - empty metadata")
+                return None
+
+            embedding = generate_embedding_sync(metadata)
+            if not embedding:
+                return None
+
+            from utils.storage_utils import store_image
+            stored_image_url = store_image(image_url, self.existing_images)
+            if not stored_image_url:
+                return None
+
+            return {
+                "image_url": image_url,
+                "source_url": source_url,
+                "metadata": metadata,
+                "embedding": embedding,
+                "stored_url": stored_image_url,
+                "context": context
+            }
+        except Exception as e:
+            logger.error(f"Failed processing single image {image_url}: {str(e)}")
+            return None
 
     async def close(self):
         if self.session:
