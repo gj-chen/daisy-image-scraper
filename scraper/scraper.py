@@ -21,9 +21,9 @@ class AsyncScraper:
 
     async def init_session(self):
         if not self.session:
-            self.session = aiohttp.ClientSession(
-                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            )
+            from utils.auth_utils import AuthSession
+            auth = AuthSession()
+            self.session = await auth.create_session()
 
     async def close(self):
         if self.session:
@@ -34,8 +34,8 @@ class AsyncScraper:
             try:
                 async with self.session.get(url, timeout=30) as response:
                     if response.status == 403 or response.status == 401:
-                        logger.error(f"Authentication required for {url}")
-                        return []
+                        logger.error(f"Authentication required for {url}. Please check your SHEERLUXE_COOKIE environment variable.")
+                        raise ScrapingError("Authentication failed - invalid or expired cookie")
                     elif response.status != 200:
                         return []
 
