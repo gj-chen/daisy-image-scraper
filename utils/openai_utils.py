@@ -16,8 +16,8 @@ def generate_gpt_structured_metadata_sync(image_context, retries=3, timeout=60):
                 model="gpt-4-turbo",
                 response_format={"type": "json_object"},
                 messages=[{"role": "system", "content": prompt}],
-                timeout=timeout,
-                request_timeout=timeout
+                timeout=120,  # Increased timeout
+                request_timeout=120  # Increased request timeout
             )
             structured_metadata = response.choices[0].message.content
             logger.info(f"GPT metadata success for: {image_context['image_url']}")
