@@ -1,5 +1,5 @@
 
-from utils.supabase_client import supabase
+from utils.supabase_client import supabase_client
 
 def clear_storage():
     try:
