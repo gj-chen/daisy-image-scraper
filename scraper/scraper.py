@@ -87,31 +87,8 @@ class AsyncScraper:
 
                             from utils.storage_utils import store_image
                             stored_image_url = store_image(image_url)
-
-                            record = prepare_metadata_record(
-                                image_url=image_url,
-                                source_url=url,
-                                title=context['title'],
-                                description=context['alt_text'],
-                                structured_metadata=metadata,
-                                embedding=embedding,
-                                stored_image_url=stored_image_url
-                            )
-
-                            return record, image_url
-                        except Exception as e:
-                            logger.error(f"Failed processing image {image_url}: {str(e)}")
-                            continue
-
-                    inserted_images = []
-                    for img in images:
-                        raw_src = img.get("src")
-                        if not raw_src:
-                            continue
-
-                        image_url = urljoin(url, raw_src)
-                        if image_url in self.existing_images:
-                            continue
+                            if not stored_image_url:
+                                continue
 
                         try:
                             metadata = generate_gpt_structured_metadata_sync(context)
