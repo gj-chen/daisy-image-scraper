@@ -12,11 +12,15 @@ def home():
 def scrape():
     data = request.json
     url = data.get('url')
+
     if not url:
+        logging.error("No URL provided.")
         return jsonify({"error": "URL missing"}), 400
 
-    results = asyncio.run(scrape_page(url))
-    return jsonify({"inserted": len(results)}), 200
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    try:
+        inserted_images = scrape_page(url)
+        logging.info(f"Inserted {len(inserted_images)} images successfully.")
+        return jsonify({"inserted": len(inserted_images)}), 200
+    except Exception as e:
+        logging.error(f"Critical scraping error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
