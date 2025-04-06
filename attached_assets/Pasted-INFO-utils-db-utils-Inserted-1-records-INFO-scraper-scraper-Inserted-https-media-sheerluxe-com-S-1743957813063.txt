@@ -1,0 +1,105 @@
+INFO:utils.db_utils:Inserted 1 records.
+
+INFO:scraper.scraper:Inserted https://media.sheerluxe.com/SrQqLJvivNmMoXeHVWYAym5e08M=/600x0/smart/https%3A%2F%2Fsheerluxe.com%2Fsites%2Fsheerluxe%2Ffiles%2Farticles%2F2025%2F03%2Fpolo-play-striped-canvas-tote-save-to-wishlist-polo-ralph-lauren.jpg?itok=9LxuUiNm successfully.
+
+[2025-04-06 16:41:54 +0000] [4] [ERROR] Error handling request /scrape
+
+    return self.wsgi_app(environ, start_response)
+
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/opt/venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+
+    response = self.full_dispatch_request()
+
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    rv = self.dispatch_request()
+
+  File "/opt/venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    images = scrape_page(url)
+
+  File "/app/scraper/scraper.py", line 33, in scrape_page
+
+    metadata = generate_gpt_structured_metadata_sync(context)
+
+  File "/app/utils/openai_utils.py", line 15, in generate_gpt_structured_metadata_sync
+
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/opt/venv/lib/python3.12/site-packages/openai/_utils/_utils.py", line 279, in wrapper
+
+    response = connection.handle_request(
+
+           ^^^^^^^^^^^^^^^^^^^^^
+
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    return self._post(
+
+  File "/opt/venv/lib/python3.12/site-packages/httpcore/_sync/connection.py", line 103, in handle_request
+
+  File "/opt/venv/lib/python3.12/site-packages/openai/_base_client.py", line 1242, in post
+
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/opt/venv/lib/python3.12/site-packages/openai/_base_client.py", line 955, in _request
+
+    raise exc
+
+               ^^^^^^^^^^^^^^^^^^
+
+  File "/opt/venv/lib/python3.12/site-packages/httpx/_client.py", line 914, in send
+
+    response = self._send_handling_auth(
+
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    ) = self._receive_response_headers(**kwargs)
+
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/opt/venv/lib/python3.12/site-packages/httpcore/_sync/http11.py", line 177, in _receive_response_headers
+
+    response = self._send_single_request(request)
+
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    response = transport.handle_request(request)
+
+  File "/opt/venv/lib/python3.12/site-packages/httpcore/_sync/http11.py", line 217, in _receive_event
+
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    data = self._network_stream.read(
+
+  File "/opt/venv/lib/python3.12/site-packages/httpx/_transports/default.py", line 250, in handle_request
+
+    resp = self._pool.handle_request(req)
+
+  File "/opt/venv/lib/python3.12/site-packages/httpcore/_backends/sync.py", line 128, in read
+
+  File "/root/.nix-profile/lib/python3.12/ssl.py", line 1232, in recv
+
+           ^^^^^^^^^^^^^^^^^
+
+  File "/root/.nix-profile/lib/python3.12/ssl.py", line 1105, in read
+
+    return self._sslobj.read(len)
+
+           ^^^^^^^^^^^^^^^^^^^^^^
+
+    sys.exit(1)
+
+SystemExit: 1
+
+[2025-04-06 16:41:54 +0000] [4] [INFO] Worker exiting (pid: 4)
+
+[2025-04-06 16:41:54 +0000] [6] [INFO] Booting worker with pid: 6
