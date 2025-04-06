@@ -1,12 +1,13 @@
 from supabase import create_client
-import openai, os, logging
+from openai import OpenAI
+import os, logging
 from datetime import datetime
 import json
 
 logger = logging.getLogger(__name__)
 
 supabase_client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def insert_metadata_to_supabase_sync(metadata_list, batch_size=50):
     try:
@@ -20,7 +21,6 @@ def insert_metadata_to_supabase_sync(metadata_list, batch_size=50):
 
 def generate_embedding_sync(metadata):
     try:
-        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         response = client.embeddings.create(
             input=json.dumps(metadata),
             model="text-embedding-ada-002"
