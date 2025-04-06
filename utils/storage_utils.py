@@ -22,14 +22,21 @@ logger = logging.getLogger(__name__)
 
 def store_image(image_url: str, existing_images=None) -> str:
     try:
-        # Quick check against known images first
-        if existing_images and image_url in existing_images:
-            logger.info(f"Image exists in DB: {image_url}")
-            return image_url
+        # Check both original URL and processed URL for duplicates
+        if existing_images:
+            # Check original URL
+            if image_url in existing_images:
+                logger.info(f"Image exists in DB: {image_url}")
+                return image_url
+                
+            # Check processed URL format 
+            base_name = image_url.split('?')[0].split('/')[-1]
+            safe_name = re.sub(r'[^a-zA-Z0-9.-]', '_', base_name)
+            processed_url = f"https://kepdfmsdvrlsloyilqsw.supabase.co/storage/v1/object/sheerluxe-images/{safe_name}"
             
-        # Get base filename for storage check
-        base_name = image_url.split('?')[0].split('/')[-1]
-        safe_name = re.sub(r'[^a-zA-Z0-9.-]', '_', base_name)
+            if processed_url in existing_images:
+                logger.info(f"Image exists in DB with processed URL: {processed_url}")
+                return processed_url
         
         # Only check storage if not in DB
         storage_cache = getattr(store_image, '_storage_cache', None)
