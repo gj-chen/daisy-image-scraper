@@ -21,19 +21,20 @@ from .exceptions import ScrapingError
 def scrape_page(url: str, max_retries: int = MAX_RETRIES) -> List[str]:
     """
     Scrapes images from a given URL with retry logic
-    
+
     Args:
         url: The URL to scrape
         max_retries: Number of retry attempts
-        
+
     Returns:
         List of scraped image URLs
-        
+
     Raises:
         ScrapingError: If scraping fails after all retries
     """
     logger.info(f"Scraping URL: {url}")
-    
+    logger.info(f"Using headers with cookies: {SHEERLUXE_COOKIE}")
+
     for attempt in range(max_retries):
         try:
             headers = {
@@ -53,7 +54,7 @@ def scrape_page(url: str, max_retries: int = MAX_RETRIES) -> List[str]:
     inserted_images = []
 
     from time import sleep
-    
+
     for img in images:
         sleep(1)  # Rate limiting
         raw_src = img.get("src")

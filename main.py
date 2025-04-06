@@ -25,19 +25,13 @@ from scraper.exceptions import ScrapingError
 
 @app.route('/scrape', methods=['POST'])
 def scrape() -> Dict[str, Any]:
-    """
-    Endpoint to scrape images from a URL
-    
-    Returns:
-        JSON response with scraped images or error
-        
-    Raises:
-        BadRequest: If URL is missing or invalid
-    """
+    logging.info("Received scrape request")
     try:
         if not request.is_json:
+            logging.error("Request is not JSON")
             raise BadRequest("Request must be JSON")
-            
+
+        logging.info(f"Request data: {request.json}")
         url = request.json.get('url')
         if not url:
             logging.error("Missing URL")
@@ -49,7 +43,7 @@ def scrape() -> Dict[str, Any]:
         images = scrape_page(url)
         if not images:
             return jsonify({"error": "No images found"}), 404
-            
+
         return jsonify({"images": images, "inserted": len(images)}), 200
     except requests.RequestException as e:
         logging.error(f"Request failed: {str(e)}")
@@ -58,7 +52,7 @@ def scrape() -> Dict[str, Any]:
         logging.error(f"Validation error: {str(e)}")
         return jsonify({"error": str(e), "type": "validation_error"}), 400
     except Exception as e:
-        logging.error(f"Unexpected error: {str(e)}")
+        logging.exception(f"Unexpected error: {str(e)}") #Added exception to log traceback
         return jsonify({"error": "Internal server error", "type": "server_error"}), 500
 
 if __name__ == "__main__":
