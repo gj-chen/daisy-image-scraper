@@ -1,20 +1,19 @@
-
-from .celery_app import app
-from .utils import fetch_and_extract_urls_and_images, download_image_file
-from .openai_client import analyze_image_with_openai, generate_gpt_structured_metadata_sync
-from .supabase_client import upload_image_to_supabase, store_analysis_result
-
-
-import redis
 import os
 import time
+import redis
+from celery import shared_task
+from .celery_app import app
+from .utils import fetch_and_extract_urls_and_images, download_image_file
+from .openai_client import generate_gpt_structured_metadata_sync
+from .supabase_client import upload_image_to_supabase, store_analysis_result
+
 
 redis_client = redis.Redis.from_url(
     f"rediss://:{os.environ['REDIS_PASSWORD']}@{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0?ssl_cert_reqs=none",
     decode_responses=True
 )
 
-@app.task(bind=True, default_retry_delay=180, max_retries=3)
+@shared_task(bind=True, default_retry_delay=180, max_retries=3)
 def process_image(self, image_url):
     from scraper.utils import download_image_file
     from scraper.supabase_client import upload_image_to_supabase, store_analysis_result
@@ -56,7 +55,7 @@ def process_image(self, image_url):
 
 
 
-@app.task(bind=True, default_retry_delay=180, max_retries=3)
+@shared_task(bind=True, default_retry_delay=180, max_retries=3)
 def scrape_page(self, url):
     if not url.startswith("https://sheerluxe.com/fashion"):
         print(f"[SKIP] Not a fashion URL: {url}")
@@ -69,7 +68,7 @@ def scrape_page(self, url):
     try:
         print(f"[SCRAPE] Fetching: {url}")
         urls, images = fetch_and_extract_urls_and_images(url)
-        
+
         redis_client.sadd('processed_urls', url)
         time.sleep(1)  # Rate limiting
 
