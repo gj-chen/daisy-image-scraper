@@ -32,6 +32,7 @@ def process_image(self, image_url):
             return
 
         store_analysis_result(analysis, storage_url, image_url)
+        redis_client.sadd('processed_images', image_url)
 
     except Exception as e:
         print(f"[ERROR] process_image failed on {image_url}: {e}")
@@ -39,19 +40,14 @@ def process_image(self, image_url):
 
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
 def scrape_page(self, url):
-    from scraper.tasks import process_image
-    from scraper.utils import fetch_and_extract_urls_and_images
-
-    # Only allow URLs starting with the correct fashion path
     if not url.startswith("https://sheerluxe.com/fashion"):
         print(f"[SKIP] Not a fashion URL: {url}")
         return
 
-    # Prevent duplicate processing
     if redis_client.sismember('processed_urls', url):
-        return  # ✅ Already seen — skip entirely
+        print(f"[SKIP] Already processed: {url}")
+        return
 
-    # Mark this URL as processed (before retry to avoid loops)
     redis_client.sadd('processed_urls', url)
 
     try:
@@ -62,7 +58,7 @@ def scrape_page(self, url):
             if not next_url.startswith("https://sheerluxe.com/fashion"):
                 continue
             if redis_client.sismember('processed_urls', next_url):
-                continue  # ✅ Don’t queue what’s already processed
+                continue
             scrape_page.delay(next_url)
 
         for image_url in images:
