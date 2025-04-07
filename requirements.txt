@@ -25,4 +25,3 @@ python-dotenv
 redis
 requests
 supabase
-flask

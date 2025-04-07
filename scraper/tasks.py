@@ -14,11 +14,11 @@ from scraper.openai_client import (
 import os
 
 redis_client = redis.Redis.from_url(
-    f"rediss://:{os.environ.get('REDIS_PASSWORD', '')}@{os.environ.get('REDIS_HOST', '0.0.0.0')}:{os.environ.get('REDIS_PORT', '6379')}/0?ssl_cert_reqs=none",
+    f"rediss://:{os.environ['REDIS_PASSWORD']}@{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0?ssl_cert_reqs=none",
     decode_responses=True
 )
 
-@app.task(bind=True, default_retry_delay=180, max_retries=3, time_limit=300)
+@app.task(bind=True, default_retry_delay=180, max_retries=3)
 def process_image(self, image_url):
     if redis_client.sismember('processed_images', image_url):
         return

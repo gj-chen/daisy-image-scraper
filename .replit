@@ -6,7 +6,10 @@ channel = "stable-24_05"
 
 [deployment]
 run = ["sh", "-c", "python run_once.py"]
-deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
 
 [workflows]
 runButton = "Run"
@@ -18,70 +21,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python run_worker.py --concurrency=8 -n worker1@%h"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_worker.py --concurrency=8 -n worker2@%h"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py 0"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py 1"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py 2"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py 3"
-
-[[workflows.workflow]]
-name = "Dev"
-author = 28026932
-mode = "parallel"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_worker.py --concurrency=8 -n worker1@%h"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_worker.py --concurrency=8 -n worker2@%h "
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py"
-
-[[workflows.workflow]]
-name = "DevDistributed"
-author = 28026932
-mode = "parallel"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_worker.py --concurrency=8 -n worker1@%h"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_worker.py --concurrency=8 -n worker2@%h"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py 0"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py 1"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py 2"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py 3"
+args = "python run_once.py"

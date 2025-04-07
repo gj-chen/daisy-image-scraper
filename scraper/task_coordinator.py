@@ -6,7 +6,7 @@ import hashlib
 import time
 import redis
 import json
-from scraper.supabase_client import supabase
+from utils.supabase_client import supabase_client
 
 logger = logging.getLogger(__name__)
 
