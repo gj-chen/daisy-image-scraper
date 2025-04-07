@@ -1,3 +1,4 @@
+
 from scraper.celery_app import app
 import scraper.tasks  # ✅ Required for registration
 from scraper.tasks import scrape_page
