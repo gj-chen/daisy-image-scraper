@@ -7,7 +7,7 @@ app = Celery(
     'scraper',
     broker=redis_url,
     backend=redis_url,
-    include=['scraper.tasks']  # ← THIS is critical
+    include=['scraper.tasks']  # ✅ Make sure this matches your repo structure
 )
 
 app.conf.update(
@@ -17,9 +17,6 @@ app.conf.update(
     timezone='UTC',
     enable_utc=True,
     task_acks_late=True,
-    worker_concurrency=4,
+    worker_concurrency=2,
     worker_prefetch_multiplier=1,
 )
-
-
-
