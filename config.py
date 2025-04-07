@@ -33,9 +33,9 @@ BATCH_SIZE = 20000  # Doubled for better DB performance
 URL_BATCH_SIZE = 20000  # Doubled for better throughput
 IMAGE_BATCH_SIZE = 1000  # Doubled for better parallel processing
 # Rate limiting - increased but staying within safe limits
-OPENAI_RATE_LIMIT = 80  # Increased requests per minute per worker
-STORAGE_RATE_LIMIT = 50  # Increased uploads per minute per worker
-SCRAPER_RATE_LIMIT = 20  # Requests per minute per worker
+OPENAI_RATE_LIMIT = 100  # Increased requests per minute per worker
+STORAGE_RATE_LIMIT = 80  # Increased uploads per minute per worker  
+SCRAPER_RATE_LIMIT = 40  # Requests per minute per worker
 
 # Get seed URLs from environment variable, fallback to default if not set
 # Multiple entry points for parallel processing
