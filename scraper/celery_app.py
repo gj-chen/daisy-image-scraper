@@ -22,9 +22,19 @@ app.conf.update(
     timezone='UTC',
     enable_utc=True,
     task_acks_late=True,
-    worker_concurrency=8,  # Increased worker processes
-    worker_prefetch_multiplier=4,  # Increased task prefetching
+    worker_concurrency=8,
+    worker_prefetch_multiplier=8,  # Increased prefetching
     task_time_limit=300,
+    result_expires=3600,  # Expire results after 1 hour
+    task_ignore_result=True,  # Don't store results if not needed
+    worker_disable_rate_limits=True,  # Disable rate limiting
+    broker_transport_options={
+        'visibility_timeout': 300,
+        'socket_timeout': 5,
+        'socket_connect_timeout': 5,
+        'retry_on_timeout': True,
+        'max_retries': 3
+    },
     broker_transport_options={
         'visibility_timeout': 300,
         'socket_timeout': 10,
