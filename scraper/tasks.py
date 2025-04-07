@@ -18,12 +18,10 @@ def process_image(self, image_url):
         if not image_data:
             return
 
-        # Upload to Supabase storage
         storage_url = upload_image_to_supabase(image_data)
         if not storage_url:
             return
 
-        # Get image analysis from OpenAI
         analysis = analyze_image_with_openai({
             "image_url": image_url,
             "alt_text": "",
@@ -33,7 +31,6 @@ def process_image(self, image_url):
         if not analysis:
             return
 
-        # Store analysis in Supabase
         store_analysis_result(analysis, storage_url, image_url)
 
     except Exception as e:
@@ -42,12 +39,9 @@ def process_image(self, image_url):
 
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
 def scrape_page(self, url):
-    from scraper.tasks import process_image  # ✅ Ensures retry works
-    from scraper.utils import fetch_and_extract_urls_and_images
-
-    # Dedup check — already processed?
     if redis_client.sadd('processed_urls', url) == 0:
-        return  # ✅ Already handled, skip log spam
+        print(f"[SKIP] URL already processed: {url}")
+        return
 
     if not url.startswith("https://sheerluxe.com/fashion"):
         print(f"[SKIP] Non-fashion page: {url}")
@@ -57,15 +51,13 @@ def scrape_page(self, url):
         print(f"[SCRAPE] Fetching: {url}")
         urls, images = fetch_and_extract_urls_and_images(url)
 
-        # Queue new page URLs only if not processed
         for next_url in urls:
             if not next_url.startswith("https://sheerluxe.com/fashion"):
                 continue
             if redis_client.sismember('processed_urls', next_url):
-                continue  # ✅ Avoid re-queuing
+                continue
             scrape_page.delay(next_url)
 
-        # Queue image processing tasks (optional filter)
         for image_url in images:
             if "sheerluxe.com" not in image_url:
                 continue
@@ -76,4 +68,3 @@ def scrape_page(self, url):
     except Exception as e:
         print(f"[ERROR] scrape_page failed on {url}: {e}")
         self.retry(exc=e)
-
