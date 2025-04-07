@@ -231,7 +231,9 @@ class AsyncScraper:
 
     async def crawl(self, seed_url: str, worker_id: int = None) -> List[str]:
         await self.init_session()
-        self.frontier.add_url(seed_url)
+        # Only add seed URL if it belongs to this worker
+        if worker_id is None or TaskCoordinator().url_belongs_to_worker(seed_url, worker_id):
+            self.frontier.add_url(seed_url)
         all_processed_images = []
         pending_tasks = []
         processed_count = 0
@@ -250,8 +252,10 @@ class AsyncScraper:
                 current_batch = []
                 while len(current_batch) < 20 and self.frontier.has_urls:  # Increased batch size
                     url, depth = self.frontier.get_next_url()
-                    if url not in self.frontier.visited and url not in [u for u, _ in current_batch]:
-                        logger.info(f"Processing URL in batch: {url}")
+                    if (url not in self.frontier.visited and 
+                        url not in [u for u, _ in current_batch] and
+                        (worker_id is None or TaskCoordinator().url_belongs_to_worker(url, worker_id))):
+                        logger.info(f"Worker {worker_id}: Processing URL in batch: {url}")
                         current_batch.append((url, depth))
 
                 if not current_batch:
