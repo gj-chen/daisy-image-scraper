@@ -23,5 +23,7 @@ app.conf.update(
     broker_connection_retry_on_startup=True,
     task_time_limit=600,
     task_soft_time_limit=300,
-    broker_pool_limit=None
+    broker_pool_limit=None,
+    broker_heartbeat=60,
+    broker_heartbeat_checkrate=2
 )
