@@ -48,8 +48,11 @@ class TaskCoordinator:
             pipe = self.redis.pipeline()
             for url in urls:
                 if self.url_belongs_to_worker(url, self.worker_id):
-                    # Only add if not already processed
-                    if not self.redis.sismember('completed_urls', url):
+                    # Check completed, pending and processing queues
+                    if not (self.redis.sismember('completed_urls', url) or
+                           self.redis.lpos('pending_urls', url) or
+                           any(self.redis.lpos(f'processing_urls:{i}', url)
+                               for i in range(self.total_workers))):
                         pipe.lpush('pending_urls', url)
             pipe.execute()
         except Exception as e:
