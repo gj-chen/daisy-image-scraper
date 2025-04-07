@@ -234,9 +234,7 @@ class AsyncScraper:
         processed_count = 0
         
         worker_info = f"Worker {worker_id}: " if worker_id is not None else ""
-        logger.info(f"{worker_info}Starting crawl from seed URL: {seed_url}")
-
-        logger.info(f"Starting crawl from seed URL: {seed_url}")
+        logger.info(f"=== {worker_info}Starting crawl from seed URL: {seed_url} ===")
 
         try:
             while True:  # Run continuously
