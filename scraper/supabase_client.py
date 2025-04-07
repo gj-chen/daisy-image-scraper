@@ -15,17 +15,47 @@ def upload_image_to_supabase(image_url, image_bytes):
     content_type = mimetypes.guess_type(image_url)[0] or "image/jpeg"
 
     try:
-        supabase.storage.from_(SUPABASE_BUCKET).upload(filename, image_bytes, {"content-type": content_type})
+        supabase.storage.from_(SUPABASE_BUCKET).upload(filename, image_bytes, {
+            "content-type": content_type
+        })
+
+        stored_image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
         print(f"[UPLOAD] Image stored: {filename}")
+        return stored_image_url
     except Exception as e:
         print(f"[ERROR] Upload failed: {e}")
+        return None
 
-def store_analysis_result(image_url, analysis):
+def store_analysis_result(
+    image_url,
+    metadata,
+    embedding=None,
+    stored_image_url=None,
+    source_url=None,
+    title=None,
+    description=None
+):
     try:
-        supabase.table(SUPABASE_TABLE).insert({
+        data = {
             "image_url": image_url,
-            "analysis": analysis
-        }).execute()
-        print(f"[DB] Metadata stored for {image_url}")
+            "metadata": metadata
+        }
+
+        if embedding:
+            data["embedding"] = embedding
+        if stored_image_url:
+            data["stored_image_url"] = stored_image_url
+        if source_url:
+            data["source_url"] = source_url
+        if title:
+            data["title"] = title
+        if description:
+            data["description"] = description
+
+        supabase.table("moodboard_items").insert(data).execute()
+        print(f"[✅ DB] Saved metadata for: {image_url}")
+
     except Exception as e:
         print(f"[ERROR] DB insert failed: {e}")
+
+

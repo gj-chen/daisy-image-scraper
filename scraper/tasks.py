@@ -6,26 +6,32 @@ from .celery_app import app
 from .utils import fetch_and_extract_urls_and_images, download_image_file
 from .openai_client import generate_gpt_structured_metadata_sync
 from .supabase_client import upload_image_to_supabase, store_analysis_result
-
+from scraper.openai_client import is_meaningful_metadata
+from scraper.openai_client import (
+    summarize_metadata_for_embedding,
+    generate_embedding_from_text
+)
+import os
 
 redis_client = redis.Redis.from_url(
     f"rediss://:{os.environ['REDIS_PASSWORD']}@{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0?ssl_cert_reqs=none",
     decode_responses=True
 )
 
-@shared_task(bind=True, default_retry_delay=180, max_retries=3)
+@app.task(bind=True, default_retry_delay=180, max_retries=3)
 def process_image(self, image_url):
-    from scraper.utils import download_image_file
-    from scraper.supabase_client import upload_image_to_supabase, store_analysis_result
-    from scraper.openai_client import generate_gpt_structured_metadata_sync, is_meaningful_metadata
-
     if redis_client.sismember('processed_images', image_url):
-        return  # Already processed
+        return
 
     try:
         print(f"[IMAGE] Processing: {image_url}")
-        image_bytes = download_image_file(image_url)
 
+        ext = os.path.splitext(image_url.split("?")[0])[1].lower()
+        if ext not in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
+            print(f"[SKIP] Unsupported image format: {image_url}")
+            return
+
+        image_bytes = download_image_file(image_url)
         if not image_bytes:
             print(f"[SKIP] Could not download: {image_url}")
             return
@@ -34,24 +40,42 @@ def process_image(self, image_url):
             "image_url": image_url,
             "alt_text": "",
             "title": "",
-            "surrounding_text": ""
+            "surrounding_text": "",
+            "source_url": "https://sheerluxe.com/fashion"  # placeholder, update later
         }
 
         metadata = generate_gpt_structured_metadata_sync(image_context, image_bytes)
-
         if not metadata or not is_meaningful_metadata(metadata):
             print(f"[SKIP] No meaningful metadata for: {image_url}")
             return
 
-        upload_image_to_supabase(image_url, image_bytes)
-        store_analysis_result(image_url, metadata)
-        redis_client.sadd('processed_images', image_url)
+        summary = summarize_metadata_for_embedding(metadata)
+        embedding = generate_embedding_from_text(summary)
 
-        print(f"[✅ STORED] Metadata + image: {image_url}")
+        stored_image_url = upload_image_to_supabase(image_url, image_bytes)
+        
+        if not stored_image_url:
+            print(f"[SKIP] Failed to upload image to Supabase: {image_url}")
+            return  # ✅ Avoid saving incomplete rows
+
+        store_analysis_result(
+            image_url=image_url,
+            metadata=metadata,
+            embedding=embedding,
+            stored_image_url=stored_image_url,
+            source_url=image_context["source_url"],
+            title=image_context["title"],
+            description=image_context["surrounding_text"]
+        )
+
+
+        redis_client.sadd('processed_images', image_url)
+        print(f"[✅ STORED] {image_url}")
 
     except Exception as e:
         print(f"[ERROR] process_image failed on {image_url}: {e}")
         self.retry(exc=e)
+
 
 
 

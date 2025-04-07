@@ -110,11 +110,15 @@ def generate_gpt_structured_metadata_sync(image_context, image_bytes, retries=3,
                         }
                     ],
                     max_tokens=800,
-                    response_format="json",
                     timeout=timeout
                 )
 
                 structured_metadata = response.choices[0].message.content
+                
+                if not structured_metadata.strip().startswith("{"):
+                    logger.warning(f"[SKIP] GPT returned non-JSON content for: {image_context['image_url']}")
+                    return None
+                    
                 logger.info(f"[✅ GPT] Metadata success for: {image_context['image_url']}")
                 return json.loads(structured_metadata)
 
@@ -129,3 +133,54 @@ def generate_gpt_structured_metadata_sync(image_context, image_bytes, retries=3,
         logger.error(f"[❌ GPT ERROR] {str(e)} for image: {image_context['image_url']}")
 
     return None
+
+
+def summarize_metadata_for_embedding(metadata: dict) -> str:
+    """Converts structured metadata into a natural language summary."""
+    try:
+        parts = []
+
+        brand = metadata["product_info"].get("brand")
+        if brand:
+            parts.append(f"from {brand}")
+
+        category = metadata["fashion_attributes"].get("item_category")
+        subtype = metadata["fashion_attributes"].get("clothing_subtype", [])
+        if category:
+            subtypes = ", ".join(subtype) if subtype else ""
+            parts.append(f"{category} {subtypes}".strip())
+
+        materials = metadata["fashion_attributes"].get("fabric_material", [])
+        if materials:
+            parts.append(f"made of {', '.join(materials)}")
+
+        pattern = metadata["fashion_attributes"].get("pattern", [])
+        if pattern:
+            parts.append(f"with {', '.join(pattern)} pattern")
+
+        vibe = metadata["style_context"].get("vibe_emotion", [])
+        if vibe:
+            parts.append(f"evoking a {', '.join(vibe)} vibe")
+
+        occasions = metadata["occasion_context"].get("event_type", [])
+        if occasions:
+            parts.append(f"suitable for {', '.join(occasions)}")
+
+        return " ".join(parts).strip()
+    except Exception:
+        return ""
+
+
+def generate_embedding_from_text(text: str):
+    if not text:
+        return None
+
+    try:
+        response = client.embeddings.create(
+            input=text,
+            model="text-embedding-3-small"
+        )
+        return response.data[0].embedding
+    except Exception as e:
+        logger.error(f"[❌ EMBEDDING ERROR] Failed to generate embedding: {e}")
+        return None
