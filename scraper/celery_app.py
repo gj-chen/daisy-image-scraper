@@ -27,9 +27,12 @@ app.conf.update(
     task_time_limit=300,
     broker_transport_options={
         'visibility_timeout': 300,
-        'socket_timeout': 30,
-        'socket_connect_timeout': 30
+        'socket_timeout': 10,
+        'socket_connect_timeout': 10,
+        'retry_on_timeout': True
     },
+    broker_connection_max_retries=3,
+    broker_connection_timeout=10,
     broker_pool_limit=None,  # Allow unlimited connections
     broker_connection_retry_on_startup=True,
     broker_host=redis_host,
