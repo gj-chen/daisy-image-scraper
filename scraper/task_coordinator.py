@@ -27,10 +27,15 @@ class TaskCoordinator:
             # Atomic operation to get and mark URLs as processing
             urls = []
             pipe = self.redis.pipeline()
-            for _ in range(self.chunk_size):
-                url = self.redis.rpoplpush('pending_urls', f'processing_urls:{self.worker_id}')
-                if url:
+            # Get all pending URLs and filter for this worker
+            pending = self.redis.lrange('pending_urls', 0, -1) or []
+            for url in pending:
+                if self.url_belongs_to_worker(url, self.worker_id):
+                    pipe.lrem('pending_urls', 1, url)
+                    pipe.rpush(f'processing_urls:{self.worker_id}', url)
                     urls.append(url)
+                if len(urls) >= self.chunk_size:
+                    break
             pipe.execute()
             return urls
         except Exception as e:
