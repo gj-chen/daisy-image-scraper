@@ -8,4 +8,4 @@ if __name__ == '__main__':
     scrape_page.delay(seed_url)  # Dispatch the scraping task
     print(f"[DISPATCHED] {seed_url}")
     time.sleep(2)  # Allow time for the task to be registered
-    app.worker_main(argv=["worker", "--loglevel=info"])  # Start the Celery worker
+    app.worker_main(argv=["worker", "--loglevel=info", "--concurrency=4"])
