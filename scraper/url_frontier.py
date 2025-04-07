@@ -15,7 +15,7 @@ class URLFrontier:
         self.max_depth = max_depth
         self.max_age_years = max_age_years
 
-    def is_valid_url(self, url: str) -> bool:
+    def is_valid_url(self, url: str, seed_url: str = "sheerluxe.com/fashion") -> bool:
         """Validate URL before adding to queue"""
         if not url or not isinstance(url, str):
             return False
@@ -24,7 +24,8 @@ class URLFrontier:
         if not url.startswith(('http://', 'https://')):
             return False
             
-        if 'sheerluxe.com/fashion' not in url:
+        # Check if URL is descendant of seed URL
+        if seed_url not in url:
             return False
             
         # Skip file downloads, images etc

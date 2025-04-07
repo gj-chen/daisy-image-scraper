@@ -90,13 +90,13 @@ def main():
     coordinator = TaskCoordinator(chunk_size=20, total_workers=args.total_workers)
     coordinator.worker_id = args.worker_id
 
-    # Filter URLs for this worker
-    worker_urls = [url for url in SCRAPER_SEED_URLS 
-                  if coordinator.url_belongs_to_worker(url, args.worker_id)]
-
-    # Initialize with filtered seed URLs
+    # Use single seed URL
+    seed_url = "https://sheerluxe.com/fashion"
+    
+    # Initialize with seed URL if it belongs to this worker
     async def init_coordinator():
-        await coordinator.add_urls(worker_urls)
+        if coordinator.url_belongs_to_worker(seed_url, args.worker_id):
+            await coordinator.add_urls([seed_url])
     
     asyncio.run(init_coordinator())
 
