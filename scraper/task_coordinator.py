@@ -1,9 +1,9 @@
-
 import asyncio
 from typing import List, Set
 import logging
 import hashlib
 import time
+import os
 import redis
 import json
 from scraper.supabase_client import supabase
@@ -11,32 +11,20 @@ from scraper.supabase_client import supabase
 logger = logging.getLogger(__name__)
 
 class TaskCoordinator:
-    def __init__(self, chunk_size: int = 50, total_workers: int = 8):
-        self.chunk_size = chunk_size
-        self.worker_id = None
-        self.total_workers = total_workers
-        self.redis = redis.Redis(host='0.0.0.0', port=6379, decode_responses=True)
-        
-    def url_belongs_to_worker(self, url: str, worker_id: int) -> bool:
-        url_hash = int(hashlib.md5(url.encode()).hexdigest(), 16)
-        return url_hash % self.total_workers == worker_id
+    def __init__(self):
+        self.redis = redis.Redis.from_url(
+            f"rediss://:{os.environ.get('REDIS_PASSWORD', '')}@{os.environ.get('REDIS_HOST', '0.0.0.0')}:{os.environ.get('REDIS_PORT', '6379')}/0?ssl_cert_reqs=none",
+            decode_responses=True
+        )
 
     async def get_next_batch(self) -> List[str]:
         """Get next batch of URLs from Redis queue"""
         try:
             # Atomic operation to get and mark URLs as processing
-            urls = []
-            pipe = self.redis.pipeline()
-            # Get all pending URLs and filter for this worker
-            pending = self.redis.lrange('pending_urls', 0, -1) or []
-            for url in pending:
-                if self.url_belongs_to_worker(url, self.worker_id):
-                    pipe.lrem('pending_urls', 1, url)
-                    pipe.rpush(f'processing_urls:{self.worker_id}', url)
-                    urls.append(url)
-                if len(urls) >= self.chunk_size:
-                    break
-            pipe.execute()
+            urls = self.redis.rpop('pending_urls', self.chunk_size) or []
+            if urls:
+                for url in urls:
+                    self.redis.rpush('processing_urls', url)
             return urls
         except Exception as e:
             logger.error(f"Failed to get next batch: {str(e)}")
@@ -47,13 +35,9 @@ class TaskCoordinator:
         try:
             pipe = self.redis.pipeline()
             for url in urls:
-                if self.url_belongs_to_worker(url, self.worker_id):
-                    # Check completed, pending and processing queues
-                    if not (self.redis.sismember('completed_urls', url) or
-                           self.redis.lpos('pending_urls', url) or
-                           any(self.redis.lpos(f'processing_urls:{i}', url)
-                               for i in range(self.total_workers))):
-                        pipe.lpush('pending_urls', url)
+                #Check if the url is already in the queue
+                if not self.redis.sismember('completed_urls', url) and not self.redis.lpos('pending_urls',url) and not self.redis.lpos('processing_urls', url):
+                    pipe.lpush('pending_urls', url)
             pipe.execute()
         except Exception as e:
             logger.error(f"Failed to add URLs: {str(e)}")
@@ -63,9 +47,8 @@ class TaskCoordinator:
         try:
             pipe = self.redis.pipeline()
             for url in urls:
-                # Remove from processing and add to completed
-                pipe.lrem(f'processing_urls:{self.worker_id}', 0, url)
-                pipe.sadd('completed_urls', url)
+                pipe.lrem('processing_urls', 1, url) #remove from processing
+                pipe.sadd('completed_urls', url) #add to completed
             pipe.execute()
         except Exception as e:
             logger.error(f"Failed to mark URLs completed: {str(e)}")

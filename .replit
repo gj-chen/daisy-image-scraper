@@ -31,7 +31,11 @@ args = "python run_worker.py --concurrency=8 -n worker1@%h"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python run_dispatcher.py 0"
+args = "python run_worker.py --concurrency=8 -n worker2@%h "
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_dispatcher.py"
 
 [[workflows.workflow]]
 name = "DevDistributed"
