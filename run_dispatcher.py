@@ -17,9 +17,14 @@ if __name__ == '__main__':
     if not seed_url.startswith('http'):
         seed_url = f'https://{seed_url}'
         
-    print(f"[START] Dispatcher starting with seed URL: {seed_url}")
-    scrape_page.delay(seed_url)
-    print(f"[DISPATCH] Seed URL dispatched: {seed_url}")
+    print(f"[SEED] Initial seed URL: {seed_url}")
+    
+    # Check if already processed
+    if redis_client.sismember('processed_urls', seed_url):
+        print(f"[SKIP] Seed URL already processed: {seed_url}")
+    else:
+        scrape_page.delay(seed_url)
+        print(f"[DISPATCH] ✨ Successfully seeded first URL: {seed_url}")
     
     while True:
         try:
