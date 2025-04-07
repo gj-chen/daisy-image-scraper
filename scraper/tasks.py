@@ -1,10 +1,8 @@
 
 from .celery_app import app
 from .utils import fetch_and_extract_urls_and_images, download_image_file
-from .openai_client import analyze_image_with_openai, generate_gpt_structured_metadata_sync
+from .openai_client import generate_gpt_structured_metadata_sync
 from .supabase_client import upload_image_to_supabase, store_analysis_result
-
-from scraper.openai_client import generate_gpt_structured_metadata_sync
 
 import redis
 import os
