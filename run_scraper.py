@@ -1,4 +1,3 @@
-
 from scraper.scraper import scrape_page
 import logging
 import os
@@ -50,7 +49,7 @@ def process_url_chunk(urls):
     if not urls:
         logging.warning("Empty URL chunk received")
         return []
-        
+
     results = []
     total = len(urls)
     for idx, url in enumerate(urls, 1):
@@ -73,7 +72,7 @@ def main():
         from utils.db_utils import clear_database
         clear_storage()
         clear_database()
-    
+
     # Track scraping date
     current_date = datetime.now().strftime("%Y-%m-%d")
     scrape_data = {"last_scrape_date": current_date}
@@ -86,31 +85,31 @@ def main():
     parser.add_argument('--worker-id', type=int, default=0)
     parser.add_argument('--total-workers', type=int, default=1)
     args = parser.parse_args()
-    
+
     coordinator = TaskCoordinator(chunk_size=20)
     coordinator.worker_id = args.worker_id
-    
+
     # Initialize with seed URLs
     coordinator.add_urls(SCRAPER_SEED_URLS)
-    
+
     # Calculate optimal number of workers based on CPU cores
     num_workers = max(1, cpu_count() - 1)
     chunk_size = len(SCRAPER_SEED_URLS) // num_workers + 1
-    
+
     print(f"Starting distributed scraping with {num_workers} workers")
-    
+
     try:
-        # Split fashion subcategories among workers
-        url_chunks = chunk_urls(SCRAPER_SEED_URLS, num_workers)
-        
+        # Each worker handles URLs based on consistent hashing
+        coordinator = TaskCoordinator(total_workers=num_workers)
+
         with Pool(processes=num_workers) as pool:
-            # Each worker processes its chunk of subcategories
-            results = pool.map(process_url_chunk, url_chunks)
-            
+            results = pool.starmap(process_url_chunk, 
+                [(SCRAPER_SEED_URLS, worker_id) for worker_id in range(num_workers)])
+
             # Combine results from all workers
             all_processed_images = [img for sublist in results if sublist for img in sublist]
             print(f"Successfully processed {len(all_processed_images)} total images from {len(SCRAPER_SEED_URLS)} subcategories")
-            
+
     except Exception as e:
         print(f"Error during parallel processing: {str(e)}")
 
