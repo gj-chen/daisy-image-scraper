@@ -79,7 +79,6 @@ def process_image(self, image_url):
 
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
 def scrape_page(self, url):
-    from scraper.utils import fetch_and_extract_urls_and_images
     from scraper.tasks import process_image
 
     if not url.startswith("https://sheerluxe.com/fashion"):
@@ -93,8 +92,7 @@ def scrape_page(self, url):
     try:
         print(f"[SCRAPE] Fetching: {url}")
         urls, images = fetch_and_extract_urls_and_images(url)
-
-        print(f"[SCRAPE] Found {len(urls)} links and {len(images)} images on {url}")
+        print(f"[SCRAPE] Found {len(urls)} links and {len(images)} images")
 
         for next_url in urls:
             if not next_url.startswith("https://sheerluxe.com/fashion"):
@@ -110,10 +108,9 @@ def scrape_page(self, url):
                 continue
             process_image.delay(image_url)
 
-        # ✅ Only mark as processed after successful extraction and enqueues
+        # ✅ Only mark as processed after successful scraping
         redis_client.sadd("processed_urls", url)
 
     except Exception as e:
         print(f"[ERROR] scrape_page failed on {url}: {e}")
         self.retry(exc=e)
-

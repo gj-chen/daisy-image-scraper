@@ -5,6 +5,6 @@ modules = ["python-3.11"]
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "python run_dispatcher.py && python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py"]
+run = ["sh", "-c", "echo '[WORKERS] Starting Celery worker...' && python3 -m celery -A scraper.tasks worker --loglevel=INFO --pool=prefork --concurrency=8 & echo '[PORT] Starting Flask server...' && python3 dummy_server.py & sleep 5 && echo '[DISPATCH] Queuing seed URL...' && python3 run_dispatcher.py"]
 deploymentTarget = "gce"
 ignorePorts = true
