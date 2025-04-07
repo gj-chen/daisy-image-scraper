@@ -1,1 +1,0 @@
-# Keep empty file for now - monitoring disabled

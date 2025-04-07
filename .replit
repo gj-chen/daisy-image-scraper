@@ -1,86 +1,12 @@
-entrypoint = "main.py"
+entrypoint = "run_once.py"
 modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
 
-[unitTest]
-language = "python3"
-
-[gitHubImport]
-requiredFiles = [".replit", "replit.nix"]
-
 [deployment]
-run = ["sh", "-c", "gunicorn --workers 8 --timeout 180 --graceful-timeout 120 --bind 0.0.0.0:5000 main:app & python run_scraper.py --worker-id=1 --total-workers=8 & python run_scraper.py --worker-id=2 --total-workers=8 & python run_scraper.py --worker-id=3 --total-workers=8 & python run_scraper.py --worker-id=4 --total-workers=8 & python run_scraper.py --worker-id=5 --total-workers=8 & python run_scraper.py --worker-id=6 --total-workers=8 & python run_scraper.py --worker-id=7 --total-workers=8 & python run_scraper.py --worker-id=8 --total-workers=8 & python monitor.py"]
-deploymentTarget = "cloudrun"
+run = ["sh", "-c", "python run_once.py"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[workflows]
-runButton = "Distributed Scraper"
-
-[[workflows.workflow]]
-name = "Run Flask"
-author = 28026932
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "gunicorn --workers 4 --timeout 180 --graceful-timeout 120 --bind 0.0.0.0:5000 main:app"
-
-[[workflows.workflow]]
-name = "Run Scraper"
-author = 28026932
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py"
-
-[[workflows.workflow]]
-name = "Monitor"
-author = 28026932
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python monitor.py"
-
-[[workflows.workflow]]
-name = "Distributed Scraper"
-author = 28026932
-mode = "parallel"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py --worker-id=1 --total-workers=8"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py --worker-id=2 --total-workers=8"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py --worker-id=3 --total-workers=8"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py --worker-id=4 --total-workers=8"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py --worker-id=5 --total-workers=8"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py --worker-id=6 --total-workers=8"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py --worker-id=7 --total-workers=8"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_scraper.py --worker-id=8 --total-workers=8"
