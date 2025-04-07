@@ -23,11 +23,11 @@ app.conf.update(
     enable_utc=True,
     task_acks_late=True,
     worker_concurrency=8,
-    worker_prefetch_multiplier=8,  # Increased prefetching
+    worker_prefetch_multiplier=4,
     task_time_limit=300,
-    result_expires=3600,  # Expire results after 1 hour
-    task_ignore_result=True,  # Don't store results if not needed
-    worker_disable_rate_limits=True,  # Disable rate limiting
+    result_expires=3600,
+    task_ignore_result=True,
+    worker_disable_rate_limits=True,
     broker_transport_options={
         'visibility_timeout': 300,
         'socket_timeout': 5,
@@ -35,18 +35,10 @@ app.conf.update(
         'retry_on_timeout': True,
         'max_retries': 3
     },
-    broker_transport_options={
-        'visibility_timeout': 300,
-        'socket_timeout': 10,
-        'socket_connect_timeout': 10,
-        'retry_on_timeout': True
-    },
     broker_connection_max_retries=3,
     broker_connection_timeout=10,
-    broker_pool_limit=None,  # Allow unlimited connections
+    broker_pool_limit=None,
     broker_connection_retry_on_startup=True,
-    broker_host=redis_host,
-    broker_port=redis_port,
-    worker_max_tasks_per_child=200,  # Prevent memory leaks
-    worker_max_memory_per_child=150000  # 150MB memory limit per worker
+    worker_max_tasks_per_child=200,
+    worker_max_memory_per_child=150000
 )

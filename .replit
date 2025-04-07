@@ -9,7 +9,7 @@ run = ["sh", "-c", "python run_once.py"]
 deploymentTarget = "cloudrun"
 
 [workflows]
-runButton = "DevDistributed"
+runButton = "Dev"
 
 [[workflows.workflow]]
 name = "Run"
@@ -27,15 +27,11 @@ mode = "parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python run_worker.py --concurrency=8"
+args = "python run_worker.py --concurrency=8 -n worker1@%h"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python run_worker.py --concurrency=8"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python run_dispatcher.py"
+args = "python run_dispatcher.py 0"
 
 [[workflows.workflow]]
 name = "DevDistributed"
