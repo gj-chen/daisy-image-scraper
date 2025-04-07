@@ -29,9 +29,9 @@ MAX_RETRIES = 3
 SCRAPER_CONCURRENCY_LIMIT = 600  # Further increased for better throughput
 SCRAPER_MAX_AGE_YEARS = 6  # Keep 6 years as requested
 SCRAPER_MAX_DEPTH = 10  # Keep depth the same
-BATCH_SIZE = 20000  # Doubled for better DB performance
-URL_BATCH_SIZE = 20000  # Doubled for better throughput
-IMAGE_BATCH_SIZE = 1000  # Doubled for better parallel processing
+BATCH_SIZE = 500  # Balanced for steady processing
+URL_BATCH_SIZE = 500  # Balanced batch size
+IMAGE_BATCH_SIZE = 100  # More frequent DB updates
 # Rate limiting - increased but staying within safe limits
 OPENAI_RATE_LIMIT = 100  # Increased requests per minute per worker
 STORAGE_RATE_LIMIT = 80  # Increased uploads per minute per worker  
