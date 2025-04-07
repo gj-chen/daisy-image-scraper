@@ -25,6 +25,6 @@ app.conf.update(
     worker_concurrency=2,
     worker_prefetch_multiplier=1,
     broker_connection_retry_on_startup=True,
-    broker_host='0.0.0.0',
-    broker_port=5000
+    broker_host=redis_host,
+    broker_port=redis_port
 )
