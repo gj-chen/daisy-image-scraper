@@ -36,11 +36,11 @@ def insert_metadata_to_supabase_sync(metadata_list, batch_size=5000):
         # Use regular insert with error handling per batch
         for batch in batches:
             try:
-                logger.info(f"Flushing batch of {len(batch)} records to DB...")
+                logger.info(f"========== STARTING DB FLUSH: {len(batch)} records ==========")
                 supabase_client.table('moodboard_items')\
                     .insert(batch)\
                     .execute()
-                logger.info(f"Successfully flushed batch of {len(batch)} records to DB")
+                logger.info(f"========== COMPLETED DB FLUSH: {len(batch)} records ==========")
             except Exception as e:
                 logger.error(f"Failed to insert batch: {str(e)}")
                 failed_records.extend(batch)
