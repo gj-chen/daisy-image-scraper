@@ -12,6 +12,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def insert_metadata_to_supabase_sync(metadata_list, batch_size=5000):
     try:
+        logger.info(f"Starting DB flush for {len(metadata_list)} records")
         # Pre-process and deduplicate records
         seen_urls = set()
         processed_records = []
@@ -35,10 +36,11 @@ def insert_metadata_to_supabase_sync(metadata_list, batch_size=5000):
         # Use regular insert with error handling per batch
         for batch in batches:
             try:
+                logger.info(f"Flushing batch of {len(batch)} records to DB...")
                 supabase_client.table('moodboard_items')\
                     .insert(batch)\
                     .execute()
-                logger.info(f"Inserted batch of {len(batch)} records")
+                logger.info(f"Successfully flushed batch of {len(batch)} records to DB")
             except Exception as e:
                 logger.error(f"Failed to insert batch: {str(e)}")
                 failed_records.extend(batch)
