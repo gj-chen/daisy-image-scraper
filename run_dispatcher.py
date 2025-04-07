@@ -19,12 +19,11 @@ if __name__ == '__main__':
         
     print(f"[SEED] Initial seed URL: {seed_url}")
     
-    # Check if already processed
-    if redis_client.sismember('processed_urls', seed_url):
-        print(f"[SKIP] Seed URL already processed: {seed_url}")
-    else:
-        scrape_page.delay(seed_url)
-        print(f"[DISPATCH] ✨ Successfully seeded first URL: {seed_url}")
+    # Force dispatch seed URL
+    redis_client.delete('processed_urls')  # Reset processed URLs
+    scrape_page.delay(seed_url)
+    print(f"[DISPATCH] ✨ Successfully seeded first URL: {seed_url}")
+    print(f"[INFO] Monitoring queue state...")
     
     while True:
         try:
