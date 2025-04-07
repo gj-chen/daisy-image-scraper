@@ -24,5 +24,7 @@ app.conf.update(
     task_acks_late=True,
     worker_concurrency=2,
     worker_prefetch_multiplier=1,
-    broker_connection_retry_on_startup=True
+    broker_connection_retry_on_startup=True,
+    broker_host='0.0.0.0',
+    broker_port=5000
 )
