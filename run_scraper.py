@@ -1,4 +1,5 @@
 from scraper.scraper import scrape_page
+import asyncio
 import logging
 import os
 import json
