@@ -27,7 +27,7 @@ def process_url(url, worker_id=None):
         print(f"Worker {worker_id}: Successfully processed {len(processed_images)} images from {url}")
         return processed_images
     except Exception as e:
-        print(f"Error processing {url}: {str(e)}")
+        print(f"Worker {worker_id}: Error processing {url}: {str(e)}")
         return []
 
 def chunk_urls(urls, num_chunks):
@@ -92,12 +92,12 @@ def main():
 
     # Use single seed URL
     seed_url = "https://sheerluxe.com/fashion"
-    
+
     # Initialize with seed URL if it belongs to this worker
     async def init_coordinator():
         if coordinator.url_belongs_to_worker(seed_url, args.worker_id):
             await coordinator.add_urls([seed_url])
-    
+
     asyncio.run(init_coordinator())
 
     # Calculate optimal number of workers based on CPU cores

@@ -291,11 +291,12 @@ class AsyncScraper:
 
         return all_processed_images
 
-def scrape_page(url: str) -> List[str]:
+def scrape_page(url: str, worker_id: int = None) -> List[str]:
     scraper = AsyncScraper()
     # Add the main URL and ensure it's properly formatted
     main_url = url if url.startswith(('http://', 'https://')) else f'https://{url}'
-    scraper.frontier.add_url(main_url, depth=0)
+    if worker_id is None or TaskCoordinator().url_belongs_to_worker(main_url, worker_id):
+        scraper.frontier.add_url(main_url, depth=0)
 
     # Add fashion subcategory URLs
     for subcat in FASHION_SUBCATEGORIES:
