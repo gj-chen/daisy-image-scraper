@@ -1,10 +1,10 @@
+
 from .celery_app import app
 from .utils import fetch_and_extract_urls_and_images, download_image_file
 from .openai_client import analyze_image_with_openai
 from .supabase_client import upload_image_to_supabase, store_analysis_result
 import redis
 import os
-from scraper.tasks import process_image
 
 redis_client = redis.Redis.from_url(
     f"rediss://:{os.environ['REDIS_PASSWORD']}@{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0?ssl_cert_reqs=none",
@@ -12,8 +12,36 @@ redis_client = redis.Redis.from_url(
 )
 
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
-def scrape_page(self, url):
+def process_image(self, image_url):
+    try:
+        image_data = download_image_file(image_url)
+        if not image_data:
+            return
 
+        # Upload to Supabase storage
+        storage_url = upload_image_to_supabase(image_data)
+        if not storage_url:
+            return
+
+        # Get image analysis from OpenAI
+        analysis = analyze_image_with_openai({
+            "image_url": image_url,
+            "alt_text": "",
+            "title": "",
+            "surrounding_text": ""
+        })
+        if not analysis:
+            return
+
+        # Store analysis in Supabase
+        store_analysis_result(analysis, storage_url, image_url)
+
+    except Exception as e:
+        print(f"[ERROR] process_image failed on {image_url}: {e}")
+        self.retry(exc=e)
+
+@app.task(bind=True, default_retry_delay=180, max_retries=3)
+def scrape_page(self, url):
     if redis_client.sadd('processed_urls', url) == 0:
         print(f"[SKIP] URL already processed: {url}")
         return
@@ -38,5 +66,3 @@ def scrape_page(self, url):
     except Exception as e:
         print(f"[ERROR] scrape_page failed on {url}: {e}")
         self.retry(exc=e)
-
-
