@@ -4,7 +4,8 @@ from typing import List, Set
 import logging
 import hashlib
 import time
-from collections import deque
+import redis
+import json
 from utils.supabase_client import supabase_client
 
 logger = logging.getLogger(__name__)
@@ -14,53 +15,49 @@ class TaskCoordinator:
         self.chunk_size = chunk_size
         self.worker_id = None
         self.total_workers = total_workers
+        self.redis = redis.Redis(host='localhost', port=6379, decode_responses=True)
         
     def url_belongs_to_worker(self, url: str, worker_id: int) -> bool:
-        """Determine if URL should be processed by this worker using consistent hashing"""
         url_hash = int(hashlib.md5(url.encode()).hexdigest(), 16)
         return url_hash % self.total_workers == worker_id
 
     async def get_next_batch(self) -> List[str]:
-        """Get next batch of URLs from shared queue"""
+        """Get next batch of URLs from Redis queue"""
         try:
-            response = await supabase_client.table('url_queue')\
-                .select('url')\
-                .eq('status', 'pending')\
-                .limit(self.chunk_size)\
-                .execute()
-            
-            urls = [r['url'] for r in response.data]
-            if urls:
-                # Mark URLs as processing
-                await supabase_client.table('url_queue')\
-                    .update({'status': 'processing', 'worker_id': self.worker_id})\
-                    .in_('url', urls)\
-                    .execute()
+            # Atomic operation to get and mark URLs as processing
+            urls = []
+            pipe = self.redis.pipeline()
+            for _ in range(self.chunk_size):
+                url = self.redis.rpoplpush('pending_urls', f'processing_urls:{self.worker_id}')
+                if url:
+                    urls.append(url)
+            pipe.execute()
             return urls
         except Exception as e:
             logger.error(f"Failed to get next batch: {str(e)}")
             return []
 
     async def add_urls(self, urls: List[str]) -> None:
-        """Add new URLs to shared queue"""
+        """Add new URLs to Redis queue"""
         try:
-            # Filter URLs that belong to this worker
-            worker_urls = [
-                {'url': url, 'status': 'pending', 'created_at': int(time.time())}
-                for url in urls
-                if self.url_belongs_to_worker(url, self.worker_id)
-            ]
-            if worker_urls:
-                await supabase_client.table('url_queue').upsert(worker_urls).execute()
+            pipe = self.redis.pipeline()
+            for url in urls:
+                if self.url_belongs_to_worker(url, self.worker_id):
+                    # Only add if not already processed
+                    if not self.redis.sismember('completed_urls', url):
+                        pipe.lpush('pending_urls', url)
+            pipe.execute()
         except Exception as e:
             logger.error(f"Failed to add URLs: {str(e)}")
 
     async def mark_completed(self, urls: List[str]) -> None:
-        """Mark URLs as completed in shared queue"""
+        """Mark URLs as completed in Redis"""
         try:
-            await supabase_client.table('url_queue')\
-                .update({'status': 'completed', 'completed_at': int(time.time())})\
-                .in_('url', urls)\
-                .execute()
+            pipe = self.redis.pipeline()
+            for url in urls:
+                # Remove from processing and add to completed
+                pipe.lrem(f'processing_urls:{self.worker_id}', 0, url)
+                pipe.sadd('completed_urls', url)
+            pipe.execute()
         except Exception as e:
             logger.error(f"Failed to mark URLs completed: {str(e)}")
