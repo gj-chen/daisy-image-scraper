@@ -18,7 +18,7 @@ redis_client = redis.Redis.from_url(
     decode_responses=True
 )
 
-@app.task(bind=True, default_retry_delay=180, max_retries=3)
+@app.task(bind=True, default_retry_delay=180, max_retries=3, time_limit=300)
 def process_image(self, image_url):
     if redis_client.sismember('processed_images', image_url):
         return
