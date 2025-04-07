@@ -1,8 +1,9 @@
 
 from .celery_app import app
 from .utils import fetch_and_extract_urls_and_images, download_image_file
-from .openai_client import analyze_image_with_openai
+from .openai_client import analyze_image_with_openai, generate_gpt_structured_metadata_sync
 from .supabase_client import upload_image_to_supabase, store_analysis_result
+
 import redis
 import os
 import time
@@ -14,10 +15,6 @@ redis_client = redis.Redis.from_url(
 
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
 def process_image(self, image_url):
-    from scraper.utils import download_image_file
-    from scraper.supabase_client import upload_image_to_supabase, store_analysis_result
-    from scraper.openai_client import generate_gpt_structured_metadata_sync
-
     if redis_client.sismember('processed_images', image_url):
         return  # ✅ Already processed
 
@@ -36,10 +33,9 @@ def process_image(self, image_url):
             "surrounding_text": ""
         }
 
-        # ✅ Structured metadata from GPT-4
         metadata = generate_gpt_structured_metadata_sync(image_context)
         if not metadata:
-            print(f"[SKIP] No structured metadata returned for {image_url}")
+            print(f"[SKIP] No meaningful metadata for: {image_url}")
             return
 
         upload_image_to_supabase(image_url, image_bytes)
@@ -51,9 +47,6 @@ def process_image(self, image_url):
     except Exception as e:
         print(f"[ERROR] process_image failed on {image_url}: {e}")
         self.retry(exc=e)
-
-
-
 
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
 def scrape_page(self, url):
