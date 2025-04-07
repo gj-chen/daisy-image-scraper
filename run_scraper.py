@@ -99,12 +99,19 @@ def main():
     print(f"Starting distributed scraping with {num_workers} workers")
 
     try:
-        # Each worker handles URLs based on consistent hashing
-        coordinator = TaskCoordinator(total_workers=num_workers)
+        # Filter seed URLs for each worker using consistent hashing
+        def get_worker_urls(worker_id):
+            coordinator = TaskCoordinator(total_workers=num_workers)
+            coordinator.worker_id = worker_id
+            # Only process URLs that belong to this worker
+            worker_urls = [url for url in SCRAPER_SEED_URLS 
+                         if coordinator.url_belongs_to_worker(url, worker_id)]
+            return worker_urls
 
         with Pool(processes=num_workers) as pool:
-            results = pool.starmap(process_url_chunk, 
-                [(SCRAPER_SEED_URLS, worker_id) for worker_id in range(num_workers)])
+            # Each worker only gets its designated URLs
+            results = pool.map(process_url_chunk,
+                [get_worker_urls(worker_id) for worker_id in range(num_workers)])
 
             # Combine results from all workers
             all_processed_images = [img for sublist in results if sublist for img in sublist]
