@@ -67,8 +67,14 @@ def process_url_chunk(urls):
     return results
 
 def main():
-    # Clear storage and DB based on config
-    if config.CLEAR_ON_RUN:
+    # Clear storage and DB based on config - only do this for worker 1
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--worker-id', type=int, default=0)
+    parser.add_argument('--total-workers', type=int, default=1)
+    args = parser.parse_args()
+
+    if args.worker_id == 1 and config.CLEAR_ON_RUN:
         from utils.storage_utils import clear_storage
         from utils.db_utils import clear_database
         clear_storage()
@@ -81,18 +87,16 @@ def main():
         json.dump(scrape_data, f)
 
     from scraper.task_coordinator import TaskCoordinator
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--worker-id', type=int, default=0)
-    parser.add_argument('--total-workers', type=int, default=1)
-    args = parser.parse_args()
-
-    coordinator = TaskCoordinator(chunk_size=20)
+    coordinator = TaskCoordinator(chunk_size=20, total_workers=args.total_workers)
     coordinator.worker_id = args.worker_id
 
-    # Initialize with seed URLs
+    # Filter URLs for this worker
+    worker_urls = [url for url in SCRAPER_SEED_URLS 
+                  if coordinator.url_belongs_to_worker(url, args.worker_id)]
+
+    # Initialize with filtered seed URLs
     async def init_coordinator():
-        await coordinator.add_urls(SCRAPER_SEED_URLS)
+        await coordinator.add_urls(worker_urls)
     
     asyncio.run(init_coordinator())
 
