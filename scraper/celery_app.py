@@ -18,7 +18,10 @@ app.conf.update(
     timezone='UTC',
     enable_utc=True,
     task_acks_late=True,
-    worker_concurrency=2,
-    worker_prefetch_multiplier=1,
-    broker_connection_retry_on_startup=True
+    worker_concurrency=8,
+    worker_prefetch_multiplier=4,
+    broker_connection_retry_on_startup=True,
+    task_time_limit=600,
+    task_soft_time_limit=300,
+    broker_pool_limit=None
 )

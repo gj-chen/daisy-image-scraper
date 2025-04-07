@@ -8,3 +8,31 @@ channel = "stable-24_05"
 run = ["sh", "-c", "python run_dispatcher.py && python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py"]
 deploymentTarget = "gce"
 ignorePorts = true
+
+[workflows]
+runButton = "Scraper Workers"
+
+[[workflows.workflow]]
+name = "Scraper Workers"
+author = 28026932
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_dispatcher.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
