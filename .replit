@@ -36,3 +36,23 @@ args = "python run_worker.py"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
