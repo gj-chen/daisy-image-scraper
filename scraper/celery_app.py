@@ -2,7 +2,11 @@
 from celery import Celery
 import os
 
-redis_url = f"rediss://:{os.environ['REDIS_PASSWORD']}@{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0?ssl_cert_reqs=none"
+redis_host = os.environ.get('REDIS_HOST', '0.0.0.0')
+redis_port = os.environ.get('REDIS_PORT', '6379')
+redis_password = os.environ.get('REDIS_PASSWORD', '')
+
+redis_url = f"rediss://:{redis_password}@{redis_host}:{redis_port}/0?ssl_cert_reqs=none"
 
 app = Celery(
     'scraper',

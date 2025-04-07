@@ -12,7 +12,7 @@ localPort = 5000
 externalPort = 80
 
 [workflows]
-runButton = "Run"
+runButton = "Dev"
 
 [[workflows.workflow]]
 name = "Run"
@@ -22,3 +22,16 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python run_once.py"
+
+[[workflows.workflow]]
+name = "Dev"
+author = 28026932
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_worker.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run_dispatcher.py"
