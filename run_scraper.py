@@ -90,7 +90,10 @@ def main():
     coordinator.worker_id = args.worker_id
 
     # Initialize with seed URLs
-    coordinator.add_urls(SCRAPER_SEED_URLS)
+    async def init_coordinator():
+        await coordinator.add_urls(SCRAPER_SEED_URLS)
+    
+    asyncio.run(init_coordinator())
 
     # Calculate optimal number of workers based on CPU cores
     num_workers = max(1, cpu_count() - 1)

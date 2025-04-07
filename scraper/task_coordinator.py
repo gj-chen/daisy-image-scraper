@@ -15,7 +15,7 @@ class TaskCoordinator:
         self.chunk_size = chunk_size
         self.worker_id = None
         self.total_workers = total_workers
-        self.redis = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        self.redis = redis.Redis(host='0.0.0.0', port=6379, decode_responses=True)
         
     def url_belongs_to_worker(self, url: str, worker_id: int) -> bool:
         url_hash = int(hashlib.md5(url.encode()).hexdigest(), 16)
