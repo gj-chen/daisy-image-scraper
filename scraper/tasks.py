@@ -14,7 +14,7 @@ from scraper.openai_client import (
 import os
 
 redis_client = redis.Redis.from_url(
-    f"rediss://:{os.environ['REDIS_PASSWORD']}@{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0?ssl_cert_reqs=none",
+    f"rediss://:{os.environ.get('REDIS_PASSWORD', '')}@{os.environ.get('REDIS_HOST', '0.0.0.0')}:{os.environ.get('REDIS_PORT', '6379')}/0?ssl_cert_reqs=none",
     decode_responses=True
 )
 
