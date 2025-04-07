@@ -6,4 +6,5 @@ channel = "stable-24_05"
 
 [deployment]
 run = ["sh", "-c", "python run_dispatcher.py && python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py & python run_worker.py"]
-deploymentTarget = "cloudrun"
+deploymentTarget = "gce"
+ignorePorts = true
