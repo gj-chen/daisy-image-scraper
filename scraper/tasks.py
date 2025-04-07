@@ -5,6 +5,7 @@ from .openai_client import analyze_image_with_openai
 from .supabase_client import upload_image_to_supabase, store_analysis_result
 import redis
 import os
+import time
 
 redis_client = redis.Redis.from_url(
     f"rediss://:{os.environ['REDIS_PASSWORD']}@{os.environ['REDIS_HOST']}:{os.environ['REDIS_PORT']}/0?ssl_cert_reqs=none",
@@ -14,6 +15,10 @@ redis_client = redis.Redis.from_url(
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
 def process_image(self, image_url):
     try:
+        if redis_client.sismember('processed_images', image_url):
+            print(f"[SKIP] Image already processed: {image_url}")
+            return
+
         image_data = download_image_file(image_url)
         if not image_data:
             return
@@ -38,25 +43,23 @@ def process_image(self, image_url):
         print(f"[ERROR] process_image failed on {image_url}: {e}")
         self.retry(exc=e)
 
-@app.task(bind=True, default_retry_delay=180, max_retries=0)
+@app.task(bind=True, default_retry_delay=180, max_retries=3)
 def scrape_page(self, url):
-    from scraper.tasks import process_image
-    from scraper.utils import fetch_and_extract_urls_and_images
-
     if not url.startswith("https://sheerluxe.com/fashion"):
         print(f"[SKIP] Not a fashion URL: {url}")
         return
 
-    try:
-        # Early exit if already seen
-        if redis_client.sismember('processed_urls', url):
-            print(f"[SKIP] Already processed: {url}")
-            return
+    if redis_client.sismember('processed_urls', url):
+        print(f"[SKIP] Already processed: {url}")
+        return
 
+    try:
         print(f"[SCRAPE] Fetching: {url}")
         urls, images = fetch_and_extract_urls_and_images(url)
+        
+        redis_client.sadd('processed_urls', url)
+        time.sleep(1)  # Rate limiting
 
-        # Queue new pages
         for next_url in urls:
             if not next_url.startswith("https://sheerluxe.com/fashion"):
                 continue
@@ -64,7 +67,6 @@ def scrape_page(self, url):
                 continue
             scrape_page.delay(next_url)
 
-        # Queue images
         for image_url in images:
             if "sheerluxe.com" not in image_url:
                 continue
@@ -72,10 +74,6 @@ def scrape_page(self, url):
                 continue
             process_image.delay(image_url)
 
-        # ✅ Only mark URL as processed after successful scrape
-        redis_client.sadd('processed_urls', url)
-
     except Exception as e:
         print(f"[ERROR] scrape_page failed on {url}: {e}")
         self.retry(exc=e)
-

@@ -18,3 +18,10 @@ openai
 python-dotenv
 redis
 requests
+beautifulsoup4
+celery
+openai
+python-dotenv
+redis
+requests
+supabase
