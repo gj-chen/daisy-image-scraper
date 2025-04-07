@@ -14,34 +14,46 @@ redis_client = redis.Redis.from_url(
 
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
 def process_image(self, image_url):
+    from scraper.utils import download_image_file
+    from scraper.supabase_client import upload_image_to_supabase, store_analysis_result
+    from scraper.openai_client import generate_gpt_structured_metadata_sync
+
+    if redis_client.sismember('processed_images', image_url):
+        return  # ✅ Already processed
+
     try:
-        if redis_client.sismember('processed_images', image_url):
-            print(f"[SKIP] Image already processed: {image_url}")
+        print(f"[IMAGE] Processing: {image_url}")
+        image_bytes = download_image_file(image_url)
+
+        if not image_bytes:
+            print(f"[SKIP] Could not download: {image_url}")
             return
 
-        image_data = download_image_file(image_url)
-        if not image_data:
-            return
-
-        storage_url = upload_image_to_supabase(image_data)
-        if not storage_url:
-            return
-
-        analysis = analyze_image_with_openai({
+        image_context = {
             "image_url": image_url,
             "alt_text": "",
             "title": "",
             "surrounding_text": ""
-        })
-        if not analysis:
+        }
+
+        # ✅ Structured metadata from GPT-4
+        metadata = generate_gpt_structured_metadata_sync(image_context)
+        if not metadata:
+            print(f"[SKIP] No structured metadata returned for {image_url}")
             return
 
-        store_analysis_result(analysis, storage_url, image_url)
+        upload_image_to_supabase(image_url, image_bytes)
+        store_analysis_result(image_url, metadata)
         redis_client.sadd('processed_images', image_url)
+
+        print(f"[✅ STORED] Metadata + image: {image_url}")
 
     except Exception as e:
         print(f"[ERROR] process_image failed on {image_url}: {e}")
         self.retry(exc=e)
+
+
+
 
 @app.task(bind=True, default_retry_delay=180, max_retries=3)
 def scrape_page(self, url):

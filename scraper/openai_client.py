@@ -1,8 +1,26 @@
-from openai import OpenAI
 import os
+import json
+import time
+import requests
+import logging
+from openai import OpenAI
+from urllib.parse import urlparse, urlunparse
 
-# Initialize OpenAI client (v1.3+ style)
-client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+logger = logging.getLogger(__name__)
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+def clean_image_url(image_url):
+    parsed = urlparse(image_url)
+    return urlunparse(parsed._replace(query=""))
+
+def is_valid_image_url(image_url):
+    try:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(image_url, headers=headers, timeout=10)
+        return response.status_code == 200 and "image" in response.headers.get("Content-Type", "")
+    except Exception as e:
+        logger.warning(f"[WARN] Error validating image URL: {image_url} — {str(e)}")
+        return False
 
 def build_prompt(image_context):
     return f"""
@@ -63,27 +81,45 @@ Double-check carefully BEFORE responding:
 - Multiple relevant attributes explicitly included if applicable.
 """
 
-def analyze_image_with_openai(image_context):
-    try:
-        prompt = build_prompt(image_context)
-        image_url = image_context["image_url"]
+def generate_gpt_structured_metadata_sync(image_context, retries=3, timeout=60):
+    raw_url = image_context["image_url"]
+    cleaned_url = clean_image_url(raw_url)
 
-        response = client.chat.completions.create(
-            model="gpt-4-vision-preview",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url", "image_url": {"url": image_url}},
-                        {"type": "text", "text": prompt}
-                    ]
-                }
-            ],
-            max_tokens=800
-        )
-
-        return response.choices[0].message.content
-
-    except Exception as e:
-        print(f"[ERROR] OpenAI failed: {e}")
+    if not is_valid_image_url(cleaned_url):
+        logger.warning(f"[SKIP] Invalid or inaccessible image URL for OpenAI: {cleaned_url}")
         return None
+
+    prompt = build_prompt({**image_context, "image_url": cleaned_url})
+
+    for attempt in range(1, retries + 1):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "image_url", "image_url": {"url": cleaned_url}},
+                            {"type": "text", "text": prompt}
+                        ]
+                    }
+                ],
+                max_tokens=800,
+                response_format="json",
+                timeout=timeout
+            )
+
+            structured_metadata = response.choices[0].message.content
+            logger.info(f"[✅ GPT] Metadata success for: {cleaned_url}")
+            return json.loads(structured_metadata)
+
+        except (requests.Timeout, requests.ConnectionError) as e:
+            logger.warning(f"[RETRY {attempt}/{retries}] Temporary network error: {str(e)}")
+            if attempt < retries:
+                time.sleep(attempt * 2)  # exponential backoff
+                continue
+        except Exception as e:
+            logger.error(f"[❌ GPT ERROR] {str(e)} — for image: {cleaned_url}")
+            break
+
+    return None
