@@ -15,14 +15,36 @@ class URLFrontier:
         self.max_depth = max_depth
         self.max_age_years = max_age_years
 
-    def add_url(self, url: str, depth: int = 0) -> None:
+    def is_valid_url(self, url: str) -> bool:
+        """Validate URL before adding to queue"""
         if not url or not isinstance(url, str):
-            return
+            return False
+            
         url = url.strip()
-        if (url not in self.visited and 
-            url.startswith(('http://', 'https://')) and
-            'sheerluxe.com/fashion' in url):
+        if not url.startswith(('http://', 'https://')):
+            return False
+            
+        if 'sheerluxe.com/fashion' not in url:
+            return False
+            
+        # Skip file downloads, images etc
+        if url.endswith(('.jpg', '.jpeg', '.png', '.gif', '.pdf', '.zip')):
+            return False
+            
+        # Skip invalid dates
+        if '/20' in url and not self.is_valid_date(url):
+            return False
+            
+        # Skip already visited/queued
+        if url in self.visited or url in self.pending:
+            return False
+            
+        return True
+
+    def add_url(self, url: str, depth: int = 0) -> None:
+        if self.is_valid_url(url):
             self.queue.append((url, depth))
+            self.pending.add(url)
 
     def get_next_url(self) -> Optional[tuple[str, int]]:
         return self.queue.popleft() if self.queue else None
