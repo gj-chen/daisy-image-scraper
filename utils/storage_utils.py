@@ -1,16 +1,7 @@
 
 from utils.supabase_client import supabase_client
 
-def clear_storage():
-    try:
-        items = supabase_client.storage.from_('sheerluxe-images').list()
-        for item in items:
-            supabase_client.storage.from_('sheerluxe-images').remove([item['name']])
-        logger.info("Cleared storage bucket")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to clear storage: {str(e)}")
-        return False
+
 
 
 import requests
