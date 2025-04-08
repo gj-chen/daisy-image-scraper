@@ -113,9 +113,4 @@ def prepare_metadata_record(image_url, source_url, title, description, structure
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat()
     }
-def clear_database():
-    """Clear all records from the database"""
-    from utils.supabase_client import supabase_client
-    # Delete all records using a filter that matches everything
-    supabase_client.table('moodboard_items').delete().filter('id', 'not.is', 'null').execute()
-    logger.info("Cleared database")
+
