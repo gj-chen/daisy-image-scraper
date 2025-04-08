@@ -54,10 +54,10 @@ def process_image(self, image_url):
         embedding = generate_embedding_from_text(summary)
 
         stored_image_url = upload_image_to_supabase(image_url, image_bytes)
-        
+
         if not stored_image_url:
             print(f"[SKIP] Failed to upload image to Supabase: {image_url}")
-            return  # ✅ Avoid saving incomplete rows
+            return
 
         store_analysis_result(
             image_url=image_url,
@@ -68,7 +68,6 @@ def process_image(self, image_url):
             title=image_context["title"],
             description=image_context["surrounding_text"]
         )
-
 
         redis_client.sadd('processed_images', image_url)
         print(f"[✅ STORED] {image_url}")
@@ -85,12 +84,15 @@ def scrape_page(self, url):
     from scraper.utils import fetch_and_extract_urls_and_images
     from scraper.tasks import process_image
 
-    try:
-        if not url.startswith("https://sheerluxe.com/fashion"):
-            print(f"[SKIP] Not a fashion URL: {url}")
-            return
+    ALLOWED_SEED_PREFIXES = [
+        "https://slman.com/style",
+        "https://sheerluxe.com/luxegen/fashion",
+        "https://sheerluxe.com/gold/fashion",
+        "https://sheerluxe.com/weddings"
+    ]
 
-        # ✅ Redis dedup optimized
+    try:
+        # ✅ Only mark as processed inside this task
         if redis_client.sadd("processed_urls", url) == 0:
             print(f"[SKIP] Already processed: {url}")
             return
@@ -100,8 +102,26 @@ def scrape_page(self, url):
         print(f"[PARSE] Found {len(urls)} links and {len(images)} images")
 
         for next_url in urls:
-            if not next_url.startswith("https://sheerluxe.com/fashion"):
-                continue
+            ALLOWED_SEED_PREFIXES = [
+                "https://slman.com/style",
+                "https://sheerluxe.com/luxegen/fashion",
+                "https://sheerluxe.com/gold/fashion",
+                "https://sheerluxe.com/weddings"
+            ]
+
+            def is_allowed_child_url(url):
+                return any(url.startswith(prefix) for prefix in ALLOWED_SEED_PREFIXES)
+
+            for next_url in urls:
+                if not is_allowed_child_url(next_url):
+                    continue
+                if redis_client.sadd("processed_urls", next_url) == 0:
+                    print(f"[DUPLICATE] Skipping already seen URL: {next_url}")
+                    continue
+                print(f"[ENQUEUE] scrape_page → {next_url}")
+                scrape_page.delay(next_url)
+
+            
             if redis_client.sadd("processed_urls", next_url) == 0:
                 print(f"[DUPLICATE] Skipping already seen URL: {next_url}")
                 continue
@@ -109,7 +129,7 @@ def scrape_page(self, url):
             scrape_page.delay(next_url)
 
         for image_url in images:
-            if "sheerluxe.com" not in image_url:
+            if "sheerluxe.com" not in image_url and "slman.com" not in image_url:
                 continue
             if redis_client.sadd("processed_images", image_url) == 0:
                 print(f"[DUPLICATE] Skipping already seen image: {image_url}")
@@ -120,4 +140,5 @@ def scrape_page(self, url):
     except Exception as e:
         print(f"[ERROR] ❌ scrape_page failed for {url}: {e}")
         self.retry(exc=e)
+
 

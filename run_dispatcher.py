@@ -3,16 +3,22 @@ import time
 import redis
 from scraper.tasks import scrape_page
 
-# Redis setup (same as in your workers)
+# Redis setup
 redis_client = redis.Redis(
     host=os.environ["REDIS_HOST"],
-    port=os.environ["REDIS_PORT"],
+    port=int(os.environ["REDIS_PORT"]),
     password=os.environ["REDIS_PASSWORD"],
     ssl=True,
     decode_responses=True
 )
 
-SEED_URL = os.environ.get("SCRAPER_SEED_URL", "https://sheerluxe.com/fashion")
+# List of seed URLs to dispatch
+SEED_URLS = [
+    "https://slman.com/style",
+    "https://sheerluxe.com/luxegen/fashion",
+    "https://sheerluxe.com/gold/fashion",
+    "https://sheerluxe.com/weddings"
+]
 
 def wait_for_celery():
     print("[DISPATCHER] Waiting for Celery workers to become ready...")
@@ -22,7 +28,7 @@ def wait_for_celery():
             clients = redis_client.info("clients")
             connected = clients.get("connected_clients", 0)
             print(f"[DISPATCHER] Redis connected clients: {connected}")
-            if connected > 1:  # 1 = just this script, >1 = worker(s) + this
+            if connected > 1:
                 print("[DISPATCHER] ✅ Celery worker(s) detected!")
                 return
         except Exception as e:
@@ -33,9 +39,17 @@ def wait_for_celery():
 def main():
     print("[DISPATCHER] 🚀 Starting dispatcher script")
     wait_for_celery()
-    print(f"[SEED] Initial seed URL: {SEED_URL}")
-    scrape_page.delay(SEED_URL)
-    print(f"[DISPATCH] ✨ Successfully seeded: {SEED_URL}")
+
+    for url in SEED_URLS:
+        print(f"[SEED] Dispatching URL: {url}")
+
+        # Optional: for manual visibility (DO NOT mark as processed)
+        redis_client.lpush("url_queue", url)
+
+        # ✅ Let scrape_page handle deduping, not here
+        scrape_page.delay(url)
+
+    print(f"[DISPATCH] ✨ Successfully seeded {len(SEED_URLS)} URLs")
 
 if __name__ == "__main__":
     main()
